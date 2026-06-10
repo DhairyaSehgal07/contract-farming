@@ -20,9 +20,7 @@ describe("proxy", () => {
   });
 
   it("passes through Better Auth API routes without checking session", async () => {
-    const response = await proxy(
-      createNextRequest("/api/auth/sign-in/email"),
-    );
+    const response = await proxy(createNextRequest("/api/auth/sign-in/email"));
 
     expect(getSession).not.toHaveBeenCalled();
     expect(response.status).toBe(200);

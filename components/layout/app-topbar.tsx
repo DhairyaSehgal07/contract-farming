@@ -142,10 +142,7 @@ export function AppTopbar({ user }: { user: DashboardUser }) {
     >
       <div className="flex min-w-0 flex-1 items-center">
         <SidebarTrigger />
-        <div
-          aria-hidden
-          className="mx-3 h-4.5 w-px shrink-0 bg-border"
-        />
+        <div aria-hidden className="mx-3 h-4.5 w-px shrink-0 bg-border" />
         <h1
           className="truncate font-heading text-lg font-semibold leading-none tracking-tight"
           title={pageTitle}
