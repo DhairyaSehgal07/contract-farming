@@ -72,3 +72,96 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+// main app models
+
+model Station {
+  id         String     @id @default(cuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  localities Locality[]
+  farmers    Farmer[]
+
+  @@map("station")
+}
+
+model Locality {
+  id         String   @id @default(cuid())
+  name       String
+  city       String?
+  state      String?
+  postalCode String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  stationId String
+  station   Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  farmers   Farmer[]
+
+  @@index([stationId])
+  @@map("locality")
+}
+
+model Farmer {
+  id            String @id @default(cuid())
+  name          String
+  accountNumber String @unique
+
+  mobileNumber  String
+  aadharNumber  String  @unique
+  panCardNumber String? @unique
+
+  bankAccountName   String?
+  bankName          String?
+  bankAccountNumber String?
+  bankIfscCode      String?
+  bankBranchName    String?
+
+  contractUrl String?
+
+  stationId String
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Restrict)
+
+  localityId String
+  locality   Locality @relation(fields: [localityId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stationId])
+  @@index([localityId])
+  @@map("farmer")
+}
+
+
+model Variety {
+  id        String   @id @default(cuid())
+  name      String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("variety")
+}
+
+model Size {
+  id        String   @id @default(cuid())
+  name      String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("size")
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  name      String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("generation")
+}
