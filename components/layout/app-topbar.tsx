@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Tooltip,
@@ -141,11 +140,14 @@ export function AppTopbar({ user }: { user: DashboardUser }) {
         "flex h-14 shrink-0 items-center border-b bg-background px-4",
       )}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-1">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mx-2 h-6" />
+      <div className="flex min-w-0 flex-1 items-center">
+        <SidebarTrigger />
+        <div
+          aria-hidden
+          className="mx-3 h-4.5 w-px shrink-0 bg-border"
+        />
         <h1
-          className="truncate text-lg font-semibold tracking-tight"
+          className="truncate font-heading text-lg font-semibold leading-none tracking-tight"
           title={pageTitle}
         >
           {pageTitle}

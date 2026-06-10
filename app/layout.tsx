@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
+import { AppProviders } from "@/components/providers/app-providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastFromSearchParams } from "@/components/toast-from-search-params";
 import { Toaster } from "@/components/ui/sonner";
@@ -49,18 +50,20 @@ export default function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Suspense fallback={null}>
-            <ToastFromSearchParams />
-          </Suspense>
-          <Toaster richColors closeButton position="top-right" />
-        </ThemeProvider>
+        <AppProviders>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Suspense fallback={null}>
+              <ToastFromSearchParams />
+            </Suspense>
+            <Toaster richColors closeButton position="top-right" />
+          </ThemeProvider>
+        </AppProviders>
       </body>
     </html>
   );

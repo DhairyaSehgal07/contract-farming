@@ -1,0 +1,38 @@
+---
+description: Zustand patterns for global client state
+globs: "{lib/stores/**,components/**/*.tsx,hooks/**}"
+alwaysApply: false
+---
+
+# Zustand
+
+Use Zustand for **global client-side state** that is not server data (UI prefs, sidebar, filters, wizard steps).
+
+## Store pattern
+
+```ts
+// lib/stores/filters-store.ts
+import { create } from "zustand";
+
+type FiltersState = {
+  status: string | null;
+  setStatus: (status: string | null) => void;
+};
+
+export const useFiltersStore = create<FiltersState>((set) => ({
+  status: null,
+  setStatus: (status) => set({ status }),
+}));
+```
+
+## Rules
+
+- One store per domain (`lib/stores/<domain>-store.ts`).
+- Do **not** put server/DB data in Zustand — use TanStack Query.
+- Select only needed slices: `useStore((s) => s.status)` to limit re-renders.
+- Keep stores synchronous; async work belongs in Query mutations or Server Actions.
+
+## Avoid
+
+- React Context for cross-page client state.
+- Storing query results in Zustand (duplicates Query cache).

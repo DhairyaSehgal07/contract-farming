@@ -40,7 +40,7 @@ export function AppSidebar() {
                       Contract Farming
                     </span>
                     <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      0.1.0
+                      0.2.0
                     </span>
                   </span>
                 </div>

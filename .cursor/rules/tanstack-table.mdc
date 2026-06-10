@@ -1,0 +1,46 @@
+---
+description: TanStack Table patterns for data tables
+globs: "{components/**/*table*,components/data-table/**,**/columns.tsx}"
+alwaysApply: false
+---
+
+# TanStack Table
+
+Use `@tanstack/react-table` for all data tables.
+
+## Structure
+
+- `columns.tsx` — `ColumnDef<TData>[]` per entity (sorting, actions, badges).
+- `*-table.tsx` — client component composing `useReactTable` or shared `DataTable`.
+- `components/data-table/data-table.tsx` — base table shell (sort, pagination).
+
+```tsx
+// components/farmer/columns.tsx
+import type { ColumnDef } from "@tanstack/react-table";
+
+export const farmerColumns: ColumnDef<Farmer>[] = [
+  { accessorKey: "name", header: "Name" },
+  // ...
+];
+```
+
+```tsx
+// components/farmer/farmer-table.tsx
+"use client";
+import { DataTable } from "@/components/data-table/data-table";
+import { farmerColumns } from "./columns";
+
+export function FarmerTable({ data }: { data: Farmer[] }) {
+  return <DataTable columns={farmerColumns} data={data} />;
+}
+```
+
+## Data source
+
+- Prefer TanStack Query in the table component: `const { data = [] } = useFarmers()`.
+- Server-prefetch + `HydrationBoundary` when the table is above the fold.
+
+## Avoid
+
+- Manual sort/pagination state when TanStack Table provides it.
+- Mixing table row data with Zustand (use Query cache).

@@ -1,0 +1,61 @@
+---
+description: TanStack Query patterns for client data fetching
+globs: "{hooks/**,lib/query/**,components/**/*.tsx,app/**/*.tsx}"
+alwaysApply: false
+---
+
+# TanStack Query
+
+Use `@tanstack/react-query` for all client-side data fetching.
+
+## Setup
+
+- `getQueryClient()` in `lib/query/query-client.ts` — new client per server request, singleton in browser.
+- `AppProviders` wraps the app with `QueryClientProvider`.
+
+## Query hooks
+
+```tsx
+// hooks/use-farmers.ts
+import { useQuery } from "@tanstack/react-query";
+
+export function useFarmers() {
+  return useQuery({
+    queryKey: ["farmers"],
+    queryFn: () => fetch("/api/farmers").then((r) => r.json()),
+  });
+}
+```
+
+- Colocate `queryKey` factories in `lib/query/keys.ts` when keys are reused.
+- Use `queryOptions()` for shared config between hooks and server prefetch.
+
+## Mutations
+
+- Use `useMutation` for creates/updates/deletes.
+- Invalidate with `queryClient.invalidateQueries({ queryKey: [...] })`.
+- After Server Actions that mutate data, prefer `updateTag()` / `revalidateTag(tag, 'max')` on the server; invalidate queries on the client when the UI reads from Query cache.
+
+## SSR prefetch (App Router)
+
+```tsx
+// Server Component page
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "@/lib/query/query-client";
+
+export default async function Page() {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({ queryKey: ["farmers"], queryFn: fetchFarmers });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <FarmersTable />
+    </HydrationBoundary>
+  );
+}
+```
+
+## Avoid
+
+- Module-level `new QueryClient()` (leaks cache between requests on the server).
+- Duplicating fetch logic outside `queryFn` / Server Actions.

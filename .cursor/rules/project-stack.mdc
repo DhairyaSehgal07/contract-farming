@@ -1,0 +1,30 @@
+---
+description: Core client/server stack conventions for Contract Farming
+alwaysApply: true
+---
+
+# Project Stack
+
+## Client-side libraries (mandatory)
+
+| Concern | Library | Do not use |
+|---------|---------|------------|
+| Data fetching | TanStack Query (`@tanstack/react-query`) | `useEffect` + `fetch`, SWR, raw `fetch` in components |
+| Global client state | Zustand | Redux, Context for app-wide state, Jotai |
+| Tables | TanStack Table (`@tanstack/react-table`) | Hand-rolled `<table>` with sort/pagination logic |
+| Forms | TanStack Form (`@tanstack/react-form`) | `react-hook-form`, native uncontrolled forms |
+| UI / design | shadcn/ui (`components/ui/`) | Custom buttons/inputs, hardcoded colors, overriding shadcn spacing |
+
+## Server vs client boundary
+
+- **Server Components** (default): auth, DB access (Prisma), initial page data, Server Actions.
+- **Client Components** (`"use client"`): TanStack Query hooks, Zustand, TanStack Table/Form, interactive UI.
+- Fetch on the client only through TanStack Query. Prefetch in Server Components when SSR/hydration is needed.
+
+## File locations
+
+- `lib/query/` — query client, query keys, shared query/mutation options
+- `hooks/` — custom hooks wrapping `useQuery` / `useMutation`
+- `lib/stores/` — Zustand stores
+- `components/data-table/` — shared table primitives
+- `lib/schemas/` — Zod schemas (shared by forms and server validation)

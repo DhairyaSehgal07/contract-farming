@@ -1,0 +1,48 @@
+---
+description: Next.js 16 App Router conventions
+alwaysApply: true
+---
+
+# Next.js 16
+
+This project uses Next.js 16 (App Router, Turbopack, React 19).
+
+## Async request APIs
+
+Always `await` dynamic APIs in Server Components and Server Actions:
+
+```ts
+const cookieStore = await cookies();
+const headerList = await headers();
+const { id } = await params;
+const sp = await searchParams;
+```
+
+## Network boundary
+
+- Use `proxy.ts` (not `middleware.ts`) for auth redirects and request interception.
+- Export `proxy` as the handler; keep `config.matcher` as needed.
+
+## Caching
+
+- Dynamic by default; opt into caching with `"use cache"` / `cacheComponents` when appropriate.
+- `revalidateTag(tag, 'max')` for stale-while-revalidate invalidation.
+- `updateTag(tag)` in Server Actions for read-your-writes after mutations.
+- `refresh()` to re-fetch uncached dynamic UI without touching tagged cache.
+
+## Components
+
+- Server Components by default; add `"use client"` only when needed (hooks, events, browser APIs).
+- Colocate Server Actions in `app/actions/`.
+- Wrap client-only subtrees in `Suspense` with a meaningful fallback or `null`.
+
+## Config (already in use)
+
+- `reactCompiler: true` in `next.config.ts`.
+- Run `next dev` / `next build` with Turbopack (default); use `--webpack` only if required.
+
+## Avoid
+
+- Sync `params` / `searchParams` / `cookies()` / `headers()` access.
+- `middleware.ts` for new request logic (deprecated in favor of `proxy.ts`).
+- Single-argument `revalidateTag(tag)` (deprecated).

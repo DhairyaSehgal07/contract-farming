@@ -1,0 +1,51 @@
+---
+description: shadcn/ui design system — colors, components, spacing, fonts
+alwaysApply: true
+---
+
+# shadcn/ui Consistency
+
+Use shadcn as the single UI system. Do not drift from its defaults.
+
+## Components
+
+- Import from `@/components/ui/*` (Button, Card, Input, Field, Dialog, etc.).
+- Use built-in `variant` and `size` props — do not recreate styles with custom classes.
+- Add new primitives via the shadcn CLI; keep them in `components/ui/`.
+- Do **not** override default padding, gap, height, or radius on shadcn components via `className` unless there is a documented, approved exception.
+
+```tsx
+// ❌ BAD — overrides default spacing/sizing
+<Button className="h-12 px-8 py-4 rounded-lg">Save</Button>
+
+// ✅ GOOD — use variants
+<Button variant="default" size="default">Save</Button>
+```
+
+## Colors
+
+- Use semantic tokens from `app/globals.css`: `bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border`, `bg-destructive`, etc.
+- Do **not** hardcode hex/rgb/oklch values or arbitrary Tailwind colors (`bg-blue-500`, `text-gray-600`) in feature code.
+- Theme changes belong in `globals.css` CSS variables only.
+
+## Typography
+
+- Body: `font-sans` (Inter) — set on `<html>` in root layout.
+- Headings: `font-heading` (Outfit) — use on page/section titles.
+- Use shadcn text utilities (`text-sm`, `text-muted-foreground`) — do not introduce new font families per page.
+
+## Layout & spacing
+
+- Compose pages with shadcn layout primitives (`Card`, `FieldGroup`, `Sidebar`, `Separator`) and their default internal spacing.
+- Page-level layout (grid, flex gaps between sections) is fine; do not alter spacing **inside** shadcn components.
+- Prefer `gap-*` on wrappers over margin hacks on child UI components.
+
+## Icons
+
+- Use `lucide-react` at default shadcn icon sizes (`size-4` unless the component defines otherwise).
+
+## Avoid
+
+- Custom-styled raw `<button>`, `<input>`, or `<table>` when a shadcn equivalent exists.
+- Forking `components/ui/*` for one-off visual tweaks — extend via composition or variants instead.
+- Inline styles or one-off color classes that break the design token system.
