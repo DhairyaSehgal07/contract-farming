@@ -62,3 +62,32 @@ export async function prefetchFarmers() {
   });
   return queryClient;
 }
+
+export async function prefetchAllMaster() {
+  const queryClient = getQueryClient();
+
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: masterKeys.stations(),
+      queryFn: fetchStations,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: masterKeys.farmers(),
+      queryFn: fetchFarmers,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: masterKeys.varieties(),
+      queryFn: fetchVarieties,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: masterKeys.sizes(),
+      queryFn: fetchSizes,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: masterKeys.generations(),
+      queryFn: fetchGenerations,
+    }),
+  ]);
+
+  return queryClient;
+}
