@@ -22,7 +22,7 @@ export function DashboardShell({
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:rounded-t-none">
           <AppTopbar user={user} />
           <main className="flex flex-1 flex-col p-6">{children}</main>
         </SidebarInset>
