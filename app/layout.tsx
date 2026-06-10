@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Outfit } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastFromSearchParams } from "@/components/toast-from-search-params";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
 const outfitHeading = Outfit({
@@ -33,6 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
@@ -43,7 +48,20 @@ export default function RootLayout({
         outfitHeading.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Suspense fallback={null}>
+            <ToastFromSearchParams />
+          </Suspense>
+          <Toaster richColors closeButton position="top-right" />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

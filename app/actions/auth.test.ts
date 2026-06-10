@@ -2,13 +2,9 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { signInAction, signOutAction, signUpAction } from "@/app/actions/auth";
 import { auth } from "@/lib/auth";
 import { createFormData, RedirectError } from "@/lib/auth/test-utils";
-import {
-  signInAction,
-  signOutAction,
-  signUpAction,
-} from "@/app/actions/auth";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {
@@ -36,10 +32,7 @@ const signOut = vi.mocked(auth.api.signOut);
 const getHeaders = vi.mocked(headers);
 const nextRedirect = vi.mocked(redirect);
 
-async function expectRedirect(
-  action: () => Promise<unknown>,
-  url: string,
-) {
+async function expectRedirect(action: () => Promise<unknown>, url: string) {
   await expect(action()).rejects.toMatchObject({ url });
   expect(nextRedirect).toHaveBeenCalledWith(url);
 }
@@ -51,7 +44,9 @@ describe("signUpAction", () => {
   });
 
   it("signs up the user and redirects to the dashboard", async () => {
-    signUpEmail.mockResolvedValue({} as Awaited<ReturnType<typeof signUpEmail>>);
+    signUpEmail.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof signUpEmail>>,
+    );
 
     await expectRedirect(
       () =>
@@ -62,7 +57,7 @@ describe("signUpAction", () => {
             password: "password123",
           }),
         ),
-      "/",
+      "/?toast=signedUp",
     );
 
     expect(signUpEmail).toHaveBeenCalledWith({
@@ -116,7 +111,9 @@ describe("signInAction", () => {
   });
 
   it("signs in the user and redirects to the dashboard", async () => {
-    signInEmail.mockResolvedValue({} as Awaited<ReturnType<typeof signInEmail>>);
+    signInEmail.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof signInEmail>>,
+    );
 
     await expectRedirect(
       () =>
@@ -126,7 +123,7 @@ describe("signInAction", () => {
             password: "password123",
           }),
         ),
-      "/",
+      "/?toast=signedIn",
     );
 
     expect(signInEmail).toHaveBeenCalledWith({
@@ -179,10 +176,12 @@ describe("signOutAction", () => {
 
   it("signs out using request headers and redirects to signin", async () => {
     const requestHeaders = new Headers({ cookie: "session=abc" });
-    getHeaders.mockResolvedValue(requestHeaders as Awaited<ReturnType<typeof headers>>);
+    getHeaders.mockResolvedValue(
+      requestHeaders as Awaited<ReturnType<typeof headers>>,
+    );
     signOut.mockResolvedValue({} as Awaited<ReturnType<typeof signOut>>);
 
-    await expectRedirect(() => signOutAction(), "/signin");
+    await expectRedirect(() => signOutAction(), "/signin?toast=signedOut");
 
     expect(signOut).toHaveBeenCalledWith({
       headers: requestHeaders,

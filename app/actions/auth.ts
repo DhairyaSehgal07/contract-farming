@@ -1,9 +1,9 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { APIError } from "better-auth/api";
+import { auth } from "@/lib/auth";
 
 function getAuthErrorMessage(error: unknown): string {
   if (error instanceof APIError) {
@@ -29,12 +29,10 @@ export async function signUpAction(formData: FormData) {
       },
     });
   } catch (error) {
-    redirect(
-      `/signup?error=${encodeURIComponent(getAuthErrorMessage(error))}`,
-    );
+    redirect(`/signup?error=${encodeURIComponent(getAuthErrorMessage(error))}`);
   }
 
-  redirect("/");
+  redirect("/?toast=signedUp");
 }
 
 export async function signInAction(formData: FormData) {
@@ -49,17 +47,15 @@ export async function signInAction(formData: FormData) {
       },
     });
   } catch (error) {
-    redirect(
-      `/signin?error=${encodeURIComponent(getAuthErrorMessage(error))}`,
-    );
+    redirect(`/signin?error=${encodeURIComponent(getAuthErrorMessage(error))}`);
   }
 
-  redirect("/");
+  redirect("/?toast=signedIn");
 }
 
 export async function signOutAction() {
   await auth.api.signOut({
     headers: await headers(),
   });
-  redirect("/signin");
+  redirect("/signin?toast=signedOut");
 }
