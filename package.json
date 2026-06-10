@@ -11,6 +11,7 @@
     "lint": "biome check",
     "format": "biome format --write",
     "db:seed": "prisma db seed",
+    "db:setup": "prisma migrate deploy && prisma db seed",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma db push --force-reset && prisma migrate dev --name init"

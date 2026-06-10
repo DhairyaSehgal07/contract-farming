@@ -25,6 +25,11 @@ export const navItems: NavItem[] = [
 export const routeTitles: Record<string, string> = {
   "/": "Dashboard",
   "/master": "Master",
+  "/master/stations": "Stations",
+  "/master/farmers": "Farmers",
+  "/master/varieties": "Varieties",
+  "/master/sizes": "Sizes",
+  "/master/generations": "Generations",
 };
 
 export function isPathActive(pathname: string, activePaths: string[]) {

@@ -73,7 +73,7 @@ model Verification {
   @@map("verification")
 }
 
-// main app models
+// main app MASTER models
 
 model Station {
   id         String     @id @default(cuid())

@@ -1,15 +1,44 @@
-import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../app/generated/prisma/client";
+
 const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
+  prisma: PrismaClient | undefined;
 };
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    adapter,
-  });
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+function createPrismaClient() {
+  const connectionString = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
+
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL or DIRECT_URL must be set for database access.",
+    );
+  }
+
+  const adapter = new PrismaPg({ connectionString });
+
+  return new PrismaClient({ adapter });
+}
+
+function isClientReady(client: PrismaClient) {
+  return (
+    typeof client.station?.findMany === "function" &&
+    typeof client.variety?.findMany === "function" &&
+    typeof client.farmer?.findMany === "function"
+  );
+}
+
+function getPrismaClient() {
+  const cached = globalForPrisma.prisma;
+
+  if (cached && isClientReady(cached)) {
+    return cached;
+  }
+
+  const client = createPrismaClient();
+  globalForPrisma.prisma = client;
+  return client;
+}
+
+const prisma = getPrismaClient();
+
 export default prisma;
