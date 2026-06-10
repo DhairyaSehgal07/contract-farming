@@ -6,9 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "biome check",
     "format": "biome format --write",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma db push --force-reset && prisma migrate dev --name init"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -38,6 +43,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }
