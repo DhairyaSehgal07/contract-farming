@@ -29,6 +29,7 @@ type DataTableProps<TData, TValue> = {
   data: TData[];
   filterColumn?: string;
   filterPlaceholder?: string;
+  showPagination?: boolean;
 };
 
 export function DataTable<TData, TValue>({
@@ -36,6 +37,7 @@ export function DataTable<TData, TValue>({
   data,
   filterColumn,
   filterPlaceholder = "Search…",
+  showPagination = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -117,7 +119,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination table={table} />
+      {showPagination ? <DataTablePagination table={table} /> : null}
     </div>
   );
 }

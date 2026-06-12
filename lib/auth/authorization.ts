@@ -108,6 +108,21 @@ export async function requireManagingDirectorAdminAction(): Promise<
   return null;
 }
 
+export async function sessionCanManageUsers(
+  session: SessionLike,
+): Promise<boolean> {
+  const result = await auth.api.userHasPermission({
+    headers: await headers(),
+    body: {
+      permissions: {
+        user: ["create", "update", "delete"],
+      },
+    },
+  });
+
+  return result.success;
+}
+
 export async function canAccessPermissionsSection(
   session: SessionLike,
 ): Promise<boolean> {

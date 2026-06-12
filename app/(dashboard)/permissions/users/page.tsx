@@ -1,11 +1,13 @@
 import { headers } from "next/headers";
 import { UsersSection } from "@/components/permissions/users/users-section";
 import { auth } from "@/lib/auth";
+import { sessionCanManageUsers } from "@/lib/auth/authorization";
 import { getServerSession } from "@/lib/auth/session";
 
 export default async function PermissionsUsersPage() {
   const session = await getServerSession();
   const headerList = await headers();
+  const canManageUsers = session ? await sessionCanManageUsers(session) : false;
 
   const usersResult = await auth.api.listUsers({
     headers: headerList,
@@ -29,6 +31,7 @@ export default async function PermissionsUsersPage() {
         createdAt: user.createdAt,
       }))}
       selfId={session?.user.id ?? ""}
+      canManageUsers={canManageUsers}
     />
   );
 }

@@ -21,14 +21,14 @@ export const permissionsNavItems: PermissionsNavItem[] = [
     value: "users",
     href: "/permissions/users",
     icon: Users,
-    description: "Manage user roles, bans, and impersonation",
+    description: "Create, edit, and manage user accounts",
   },
   {
     label: "Sessions",
     value: "sessions",
     href: "/permissions/sessions",
     icon: KeyRound,
-    description: "View and revoke active sessions",
+    description: "View, delete, and clear sessions",
   },
 ];
 

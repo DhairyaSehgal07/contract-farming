@@ -38,10 +38,18 @@ async function expectRedirect(action: () => Promise<unknown>, url: string) {
 describe("signInAction", () => {
   beforeEach(() => {
     signInEmail.mockReset();
+    getHeaders.mockReset();
     nextRedirect.mockClear();
   });
 
   it("signs in the user and redirects to the dashboard", async () => {
+    const requestHeaders = new Headers({
+      cookie: "session=abc",
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    });
+    getHeaders.mockResolvedValue(
+      requestHeaders as Awaited<ReturnType<typeof headers>>,
+    );
     signInEmail.mockResolvedValue(
       {} as Awaited<ReturnType<typeof signInEmail>>,
     );
@@ -62,6 +70,7 @@ describe("signInAction", () => {
         email: "test@example.com",
         password: "password123",
       },
+      headers: requestHeaders,
     });
   });
 

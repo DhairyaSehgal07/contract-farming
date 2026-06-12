@@ -25,6 +25,7 @@ export async function signInAction(formData: FormData) {
         email,
         password,
       },
+      headers: await headers(),
     });
   } catch (error) {
     redirect(`/signin?error=${encodeURIComponent(getAuthErrorMessage(error))}`);

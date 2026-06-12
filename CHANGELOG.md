@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.1] - 2026-06-12
+
+### Features
+
+- Add RBAC permissions section with role matrix, users, and sessions tabs
+- Add user management: create, edit, delete, impersonate, ban, and role controls
+- Add session revoke and clear-history actions for managing director admins
+- Add permission-gated user management UI via `sessionCanManageUsers`
+
+### Enhancements
+
+- Migrate permissions users, sessions, and role matrix to shared `DataTable`
+- Add optional `showPagination` prop to `DataTable`
+- Pass request headers on sign-in for correct session creation
+
+### Tests
+
+- Add session server action tests
+- Update sign-in action tests to assert headers are forwarded
+
 ## [0.2.0] - 2026-06-10
 
 ### Features

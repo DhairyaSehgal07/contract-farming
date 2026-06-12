@@ -1,15 +1,20 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DataTable } from "@/components/data-table/data-table";
+import { createRoleMatrixColumns } from "@/components/permissions/roles/role-matrix-columns";
 import {
-  EDITABLE_ROLES,
+  buildRoleMatrixRows,
+  type RoleMatrixRow,
+} from "@/components/permissions/roles/role-matrix-types";
+import {
   formatRoleLabel,
   type EditableRole,
 } from "@/lib/auth/roles";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -69,6 +74,23 @@ export function RoleMatrixSection() {
     }
     setGrants(nextGrants);
   }, [matrix, selectedRole, catalogEntries]);
+
+  const tableData = useMemo(() => buildRoleMatrixRows(grants), [grants]);
+
+  const handleToggle = useCallback(
+    (resource: AppResource, action: AppAction, checked: boolean) => {
+      setGrants((current) => ({
+        ...current,
+        [grantKey(resource, action)]: checked,
+      }));
+    },
+    [],
+  );
+
+  const columns = useMemo<ColumnDef<RoleMatrixRow>[]>(
+    () => createRoleMatrixColumns({ onToggle: handleToggle }),
+    [handleToggle],
+  );
 
   function handleSave() {
     const grantList = Object.entries(grants)
@@ -138,34 +160,14 @@ export function RoleMatrixSection() {
           <CardHeader>
             <CardTitle className="font-heading text-base">Permissions</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {catalogEntries.map((entry) => {
-              const key = grantKey(entry.resource, entry.action);
-              return (
-                <label
-                  key={key}
-                  htmlFor={key}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <Checkbox
-                    id={key}
-                    checked={Boolean(grants[key])}
-                    onCheckedChange={(checked) =>
-                      setGrants((current) => ({
-                        ...current,
-                        [key]: checked === true,
-                      }))
-                    }
-                  />
-                  <span>
-                    {entry.resource}{" "}
-                    <span className="text-muted-foreground">
-                      ({entry.action})
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
+          <CardContent>
+            <DataTable
+              columns={columns}
+              data={tableData}
+              filterColumn="resource"
+              filterPlaceholder="Search resources…"
+              showPagination={false}
+            />
           </CardContent>
         </Card>
 
