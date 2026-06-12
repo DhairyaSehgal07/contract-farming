@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "lint": "biome check",
     "format": "biome format --write",
+    "db:delete-users": "tsx scripts/delete-all-users.ts",
     "db:seed": "prisma db seed",
     "db:setup": "prisma migrate deploy && prisma db seed",
     "db:generate": "prisma generate",

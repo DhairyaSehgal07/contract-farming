@@ -1,5 +1,11 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { redirect } from "next/navigation";
 import { MasterTabs } from "@/components/master/master-tabs";
+import {
+  getEffectiveRole,
+  roleHasPermission,
+} from "@/lib/auth/authorization";
+import { getServerSession } from "@/lib/auth/session";
 import { prefetchAllMaster } from "@/lib/query/prefetch-master";
 
 export default async function MasterLayout({
@@ -7,6 +13,20 @@ export default async function MasterLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession();
+  if (!session) {
+    redirect("/signin");
+  }
+
+  const canAccess = await roleHasPermission(
+    getEffectiveRole(session),
+    "master",
+    "read",
+  );
+  if (!canAccess) {
+    redirect("/");
+  }
+
   const queryClient = await prefetchAllMaster();
 
   return (

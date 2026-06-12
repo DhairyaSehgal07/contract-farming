@@ -15,26 +15,6 @@ function getAuthErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export async function signUpAction(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const name = formData.get("name") as string;
-
-  try {
-    await auth.api.signUpEmail({
-      body: {
-        name,
-        email,
-        password,
-      },
-    });
-  } catch (error) {
-    redirect(`/signup?error=${encodeURIComponent(getAuthErrorMessage(error))}`);
-  }
-
-  redirect("/?toast=signedUp");
-}
-
 export async function signInAction(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;

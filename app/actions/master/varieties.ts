@@ -6,7 +6,7 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
 import {
   type CreateLookupInput,
   createLookupSchema,
@@ -23,7 +23,7 @@ export type VarietyRow = {
 };
 
 export async function listVarieties(): Promise<ActionResult<VarietyRow[]>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -40,7 +40,7 @@ export async function listVarieties(): Promise<ActionResult<VarietyRow[]>> {
 export async function createVariety(
   input: CreateLookupInput,
 ): Promise<ActionResult<VarietyRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createLookupSchema.safeParse(input);
@@ -59,7 +59,7 @@ export async function createVariety(
 export async function updateVariety(
   input: UpdateLookupInput,
 ): Promise<ActionResult<VarietyRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateLookupSchema.safeParse(input);
@@ -79,7 +79,7 @@ export async function updateVariety(
 }
 
 export async function deleteVariety(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {

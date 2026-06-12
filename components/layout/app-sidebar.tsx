@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { NavVisibility } from "@/components/layout/dashboard-shell";
 import { isPathActive, navItems } from "@/components/layout/nav-config";
 import {
   Sidebar,
@@ -17,8 +18,15 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar() {
+export function AppSidebar({
+  navVisibility,
+}: {
+  navVisibility: NavVisibility;
+}) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter(
+    (item) => navVisibility[item.href] !== false,
+  );
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -57,7 +65,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = isPathActive(pathname, item.activePaths);
 

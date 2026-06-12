@@ -2,7 +2,7 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { signInAction, signOutAction, signUpAction } from "@/app/actions/auth";
+import { signInAction, signOutAction } from "@/app/actions/auth";
 import { auth } from "@/lib/auth";
 import { createFormData, RedirectError } from "@/lib/auth/test-utils";
 
@@ -19,14 +19,12 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
-      signUpEmail: vi.fn(),
       signInEmail: vi.fn(),
       signOut: vi.fn(),
     },
   },
 }));
 
-const signUpEmail = vi.mocked(auth.api.signUpEmail);
 const signInEmail = vi.mocked(auth.api.signInEmail);
 const signOut = vi.mocked(auth.api.signOut);
 const getHeaders = vi.mocked(headers);
@@ -36,73 +34,6 @@ async function expectRedirect(action: () => Promise<unknown>, url: string) {
   await expect(action()).rejects.toMatchObject({ url });
   expect(nextRedirect).toHaveBeenCalledWith(url);
 }
-
-describe("signUpAction", () => {
-  beforeEach(() => {
-    signUpEmail.mockReset();
-    nextRedirect.mockClear();
-  });
-
-  it("signs up the user and redirects to the dashboard", async () => {
-    signUpEmail.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof signUpEmail>>,
-    );
-
-    await expectRedirect(
-      () =>
-        signUpAction(
-          createFormData({
-            name: "Test User",
-            email: "test@example.com",
-            password: "password123",
-          }),
-        ),
-      "/?toast=signedUp",
-    );
-
-    expect(signUpEmail).toHaveBeenCalledWith({
-      body: {
-        name: "Test User",
-        email: "test@example.com",
-        password: "password123",
-      },
-    });
-  });
-
-  it("redirects back to signup with API error message on failure", async () => {
-    signUpEmail.mockRejectedValue(
-      new APIError("BAD_REQUEST", { message: "Email already exists" }),
-    );
-
-    await expectRedirect(
-      () =>
-        signUpAction(
-          createFormData({
-            name: "Test User",
-            email: "test@example.com",
-            password: "password123",
-          }),
-        ),
-      "/signup?error=Email%20already%20exists",
-    );
-  });
-
-  it("redirects back to signup with generic message for unknown errors", async () => {
-    signUpEmail.mockRejectedValue("unexpected");
-
-    await expectRedirect(
-      () =>
-        signUpAction(
-          createFormData({
-            name: "Test User",
-            email: "test@example.com",
-            password: "password123",
-          }),
-        ),
-      "/signup?error=Something%20went%20wrong.%20Please%20try%20again.",
-    );
-  });
-});
 
 describe("signInAction", () => {
   beforeEach(() => {

@@ -6,7 +6,10 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import {
+  requireMasterReadAction,
+  requireMasterWriteAction,
+} from "@/lib/schemas/master/auth";
 import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 import {
   type CreateStationInput,
@@ -27,7 +30,7 @@ export type StationRow = {
 };
 
 export async function listStations(): Promise<ActionResult<StationRow[]>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -49,7 +52,7 @@ export async function listStations(): Promise<ActionResult<StationRow[]>> {
 export async function createStation(
   input: CreateStationInput,
 ): Promise<ActionResult<StationRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createStationSchema.safeParse(input);
@@ -75,7 +78,7 @@ export async function createStation(
 export async function updateStation(
   input: UpdateStationInput,
 ): Promise<ActionResult<StationRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateStationSchema.safeParse(input);
@@ -100,7 +103,7 @@ export async function updateStation(
 }
 
 export async function deleteStation(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {

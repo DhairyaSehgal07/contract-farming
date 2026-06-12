@@ -6,7 +6,7 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
 import {
   type CreateLocalityInput,
   createLocalitySchema,
@@ -33,7 +33,7 @@ export type LocalityRow = {
 export async function listLocalities(
   stationId: string,
 ): Promise<ActionResult<LocalityRow[]>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   if (!stationId) {
@@ -60,7 +60,7 @@ export async function listLocalities(
 export async function createLocality(
   input: CreateLocalityInput,
 ): Promise<ActionResult<LocalityRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createLocalitySchema.safeParse(input);
@@ -95,7 +95,7 @@ export async function createLocality(
 export async function updateLocality(
   input: UpdateLocalityInput,
 ): Promise<ActionResult<LocalityRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateLocalitySchema.safeParse(input);
@@ -128,7 +128,7 @@ export async function updateLocality(
 }
 
 export async function deleteLocality(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {

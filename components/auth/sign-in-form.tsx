@@ -2,7 +2,6 @@
 
 import { useForm } from "@tanstack/react-form";
 import { EyeIcon, EyeOffIcon, Lock } from "lucide-react";
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import * as z from "zod";
 import { signInAction } from "@/app/actions/auth";
@@ -11,7 +10,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -158,18 +156,6 @@ export function SignInForm() {
           </FieldGroup>
         </form>
       </CardContent>
-
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-medium text-primary hover:underline"
-          >
-            Sign up
-          </Link>
-        </p>
-      </CardFooter>
     </Card>
   );
 }

@@ -6,7 +6,7 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
 import {
   type CreateLookupInput,
   createLookupSchema,
@@ -23,7 +23,7 @@ export type SizeRow = {
 };
 
 export async function listSizes(): Promise<ActionResult<SizeRow[]>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -38,7 +38,7 @@ export async function listSizes(): Promise<ActionResult<SizeRow[]>> {
 export async function createSize(
   input: CreateLookupInput,
 ): Promise<ActionResult<SizeRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createLookupSchema.safeParse(input);
@@ -57,7 +57,7 @@ export async function createSize(
 export async function updateSize(
   input: UpdateLookupInput,
 ): Promise<ActionResult<SizeRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateLookupSchema.safeParse(input);
@@ -77,7 +77,7 @@ export async function updateSize(
 }
 
 export async function deleteSize(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {

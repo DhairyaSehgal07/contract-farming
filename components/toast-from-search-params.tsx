@@ -32,8 +32,7 @@ export function ToastFromSearchParams() {
     }
 
     if (error) {
-      const isSignUp = pathname === "/signup";
-      toast.error(isSignUp ? "Sign up failed" : "Sign in failed", {
+      toast.error("Sign in failed", {
         description: error,
       });
     }

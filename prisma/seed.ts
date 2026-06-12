@@ -1,15 +1,75 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import { generateId } from "better-auth";
+import { hashPassword } from "better-auth/crypto";
 import { config } from "dotenv";
-import { PrismaClient } from "../app/generated/prisma/client";
-import { auth } from "../lib/auth";
+import { PrismaClient, Role } from "../app/generated/prisma/client";
 
 config({ override: true });
 
-const DEV_USER = {
-  email: "dev@coldop.local",
-  password: "Password1!",
-  name: "Dev User",
-} as const;
+const SEED_PASSWORD = "12345678";
+
+const SEED_USERS = [
+  {
+    email: "managing.director@example.com",
+    name: "Managing Director",
+    role: Role.MANAGING_DIRECTOR,
+  },
+  {
+    email: "programme.manager@example.com",
+    name: "Programme Manager",
+    role: Role.PROGRAMME_MANAGER,
+  },
+  {
+    email: "accounts.settlements@example.com",
+    name: "Accounts Settlements Manager",
+    role: Role.ACCOUNTS_SETTLEMENTS_MANAGER,
+  },
+  {
+    email: "field.operations@example.com",
+    name: "Field Operations Manager",
+    role: Role.FIELD_OPERATIONS_MANAGER,
+  },
+  {
+    email: "accounts.seeds@example.com",
+    name: "Accounts Seeds Supply Manager",
+    role: Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER,
+  },
+  {
+    email: "logistics.executive@example.com",
+    name: "Logistics Executive",
+    role: Role.LOGISTICS_EXECUTIVE,
+  },
+  {
+    email: "field.officer@example.com",
+    name: "Field Officer",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "user@example.com",
+    name: "Standard User",
+    role: Role.USER,
+  },
+] as const;
+
+const DASHBOARD_READ = [{ resource: "dashboard", action: "read" }] as const;
+
+const DEFAULT_ROLE_PERMISSIONS: Record<
+  Role,
+  { resource: string; action: string }[]
+> = {
+  [Role.MANAGING_DIRECTOR]: [],
+  [Role.PROGRAMME_MANAGER]: [
+    { resource: "dashboard", action: "read" },
+    { resource: "master", action: "read" },
+    { resource: "master", action: "write" },
+  ],
+  [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [...DASHBOARD_READ],
+  [Role.FIELD_OPERATIONS_MANAGER]: [...DASHBOARD_READ],
+  [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [...DASHBOARD_READ],
+  [Role.LOGISTICS_EXECUTIVE]: [...DASHBOARD_READ],
+  [Role.FIELD_OFFICER]: [...DASHBOARD_READ],
+  [Role.USER]: [...DASHBOARD_READ],
+};
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
@@ -37,22 +97,92 @@ const SIZES = [
   "ungraded",
 ] as const;
 
-async function seedDevUser() {
-  const existing = await prisma.user.findUnique({
-    where: { email: DEV_USER.email },
-  });
+async function upsertCredentialUser({
+  email,
+  name,
+  role,
+  password = "12345678",
+}: {
+  email: string;
+  name: string;
+  role: Role;
+  password?: string;
+}) {
+  const existing = await prisma.user.findUnique({ where: { email } });
 
   if (existing) {
-    return;
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { role, name },
+    });
+    return existing.id;
   }
 
-  await auth.api.signUpEmail({
-    body: DEV_USER,
+  const userId = generateId();
+  const hashedPassword = await hashPassword(password);
+
+  await prisma.user.create({
+    data: {
+      id: userId,
+      name,
+      email,
+      emailVerified: true,
+      role,
+      accounts: {
+        create: {
+          id: generateId(),
+          accountId: userId,
+          providerId: "credential",
+          password: hashedPassword,
+        },
+      },
+    },
+  });
+
+  return userId;
+}
+
+async function seedUsers() {
+  for (const user of SEED_USERS) {
+    await upsertCredentialUser({ ...user, password: SEED_PASSWORD });
+  }
+}
+
+async function seedRolePermissions() {
+  for (const role of Object.values(Role)) {
+    if (role === Role.MANAGING_DIRECTOR) continue;
+
+    const grants = DEFAULT_ROLE_PERMISSIONS[role];
+    await prisma.rolePermission.deleteMany({ where: { role } });
+
+    if (grants.length > 0) {
+      await prisma.rolePermission.createMany({
+        data: grants.map((grant) => ({
+          role,
+          resource: grant.resource,
+          action: grant.action,
+        })),
+      });
+    }
+  }
+
+  const permissionsGrants = [
+    { resource: "permissions", action: "read" },
+    { resource: "permissions", action: "write" },
+  ];
+
+  await prisma.rolePermission.createMany({
+    data: permissionsGrants.map((grant) => ({
+      role: Role.MANAGING_DIRECTOR,
+      ...grant,
+    })),
+    skipDuplicates: true,
   });
 }
 
 async function main() {
-  await seedDevUser();
+  await seedUsers();
+  await seedRolePermissions();
 
   for (const name of VARIETIES) {
     await prisma.variety.upsert({
@@ -130,11 +260,14 @@ async function main() {
   });
 
   console.log("Seed complete:");
-  console.log(`  dev user: ${DEV_USER.email} / ${DEV_USER.password}`);
+  for (const user of SEED_USERS) {
+    console.log(`  user: ${user.email} / ${SEED_PASSWORD} (${user.role})`);
+  }
   console.log(`  ${VARIETIES.length} varieties`);
   console.log(`  ${GENERATIONS.length} generations`);
   console.log(`  ${SIZES.length} sizes`);
   console.log("  1 station (Bazpur), 1 locality (Puranpur), 1 farmer");
+  console.log("  default role permissions seeded");
 }
 
 main()

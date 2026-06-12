@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Outfit } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
+import { ImpersonationIndicator } from "@/components/auth/impersonation-indicator";
 import { AppProviders } from "@/components/providers/app-providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastFromSearchParams } from "@/components/toast-from-search-params";
@@ -55,6 +56,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <ImpersonationIndicator />
             <Suspense fallback={null}>
               <ToastFromSearchParams />
             </Suspense>

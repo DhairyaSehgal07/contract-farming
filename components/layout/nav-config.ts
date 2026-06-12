@@ -1,10 +1,20 @@
-import { Database, LayoutDashboard, type LucideIcon } from "lucide-react";
+import {
+  Database,
+  LayoutDashboard,
+  Shield,
+  type LucideIcon,
+} from "lucide-react";
+import type { AppAction, AppResource } from "@/lib/auth/permission-catalog";
 
 export type NavItem = {
   name: string;
   href: string;
   icon: LucideIcon;
   activePaths: string[];
+  requiredAppPermission?: {
+    resource: AppResource;
+    action: AppAction;
+  };
 };
 
 export const navItems: NavItem[] = [
@@ -13,18 +23,31 @@ export const navItems: NavItem[] = [
     href: "/",
     icon: LayoutDashboard,
     activePaths: ["/"],
+    requiredAppPermission: { resource: "dashboard", action: "read" },
   },
   {
     name: "Master",
     href: "/master",
     icon: Database,
     activePaths: ["/master"],
+    requiredAppPermission: { resource: "master", action: "read" },
+  },
+  {
+    name: "Permissions",
+    href: "/permissions",
+    icon: Shield,
+    activePaths: ["/permissions"],
+    requiredAppPermission: { resource: "permissions", action: "read" },
   },
 ];
 
 export const routeTitles: Record<string, string> = {
   "/": "Dashboard",
   "/master": "Master",
+  "/permissions": "Permissions",
+  "/permissions/roles": "Role permissions",
+  "/permissions/users": "Users",
+  "/permissions/sessions": "Sessions",
   "/master/stations": "Stations",
   "/master/farmers": "Farmers",
   "/master/varieties": "Varieties",

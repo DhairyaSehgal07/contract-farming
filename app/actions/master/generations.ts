@@ -6,7 +6,7 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
 import {
   type CreateLookupInput,
   createLookupSchema,
@@ -25,7 +25,7 @@ export type GenerationRow = {
 export async function listGenerations(): Promise<
   ActionResult<GenerationRow[]>
 > {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -40,7 +40,7 @@ export async function listGenerations(): Promise<
 export async function createGeneration(
   input: CreateLookupInput,
 ): Promise<ActionResult<GenerationRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createLookupSchema.safeParse(input);
@@ -59,7 +59,7 @@ export async function createGeneration(
 export async function updateGeneration(
   input: UpdateLookupInput,
 ): Promise<ActionResult<GenerationRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateLookupSchema.safeParse(input);
@@ -79,7 +79,7 @@ export async function updateGeneration(
 }
 
 export async function deleteGeneration(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {

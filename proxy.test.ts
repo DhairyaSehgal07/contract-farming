@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@/lib/auth";
 import { createNextRequest, mockSession } from "@/lib/auth/test-utils";
@@ -36,28 +35,20 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("allows unauthenticated access to /signup", async () => {
-    getSession.mockResolvedValue(null);
-
+  it("redirects /signup to /signin", async () => {
     const response = await proxy(createNextRequest("/signup"));
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("location")).toBeNull();
+    expect(getSession).not.toHaveBeenCalled();
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/signin",
+    );
   });
 
   it("redirects authenticated users away from /signin", async () => {
     getSession.mockResolvedValue(mockSession);
 
     const response = await proxy(createNextRequest("/signin"));
-
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost:3000/");
-  });
-
-  it("redirects authenticated users away from /signup", async () => {
-    getSession.mockResolvedValue(mockSession);
-
-    const response = await proxy(createNextRequest("/signup"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/");

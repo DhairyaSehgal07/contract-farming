@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
-const authRoutes = ["/signin", "/signup"];
+const authRoutes = ["/signin"];
 
 function isAuthRoute(pathname: string) {
   return authRoutes.some(
@@ -15,6 +15,10 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
+  }
+
+  if (pathname === "/signup" || pathname.startsWith("/signup/")) {
+    return NextResponse.redirect(new URL("/signin", request.url));
   }
 
   const session = await auth.api.getSession({

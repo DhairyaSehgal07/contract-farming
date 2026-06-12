@@ -1,3 +1,8 @@
+export const permissionsKeys = {
+  all: ["permissions"] as const,
+  roleMatrix: () => [...permissionsKeys.all, "role-matrix"] as const,
+};
+
 export const masterKeys = {
   all: ["master"] as const,
   varieties: () => [...masterKeys.all, "varieties"] as const,

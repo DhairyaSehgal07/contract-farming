@@ -6,7 +6,7 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireAuthAction } from "@/lib/schemas/master/auth";
+import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
 import {
   type CreateFarmerInput,
   createFarmerSchema,
@@ -53,7 +53,7 @@ async function validateLocalityBelongsToStation(
 }
 
 export async function listFarmers(): Promise<ActionResult<FarmerRow[]>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -72,7 +72,7 @@ export async function listFarmers(): Promise<ActionResult<FarmerRow[]>> {
 }
 
 export async function getFarmer(id: string): Promise<ActionResult<FarmerRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterReadAction();
   if (authError) return authError;
 
   try {
@@ -97,7 +97,7 @@ export async function getFarmer(id: string): Promise<ActionResult<FarmerRow>> {
 export async function createFarmer(
   input: CreateFarmerInput,
 ): Promise<ActionResult<FarmerRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = createFarmerSchema.safeParse(input);
@@ -129,7 +129,7 @@ export async function createFarmer(
 export async function updateFarmer(
   input: UpdateFarmerInput,
 ): Promise<ActionResult<FarmerRow>> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   const parsed = updateFarmerSchema.safeParse(input);
@@ -160,7 +160,7 @@ export async function updateFarmer(
 }
 
 export async function deleteFarmer(id: string): Promise<ActionResult> {
-  const authError = await requireAuthAction();
+  const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
   if (!id) {
