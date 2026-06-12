@@ -31,6 +31,10 @@ import {
   MANAGING_DIRECTOR_ROLE,
   type AppRole,
 } from "@/lib/auth/roles";
+import {
+  canShowUserAdminActions,
+  isUserBanProtected,
+} from "@/lib/permissions/session-guards";
 
 export type PermissionsUser = {
   id: string;
@@ -109,12 +113,18 @@ export function createUserColumns(
       cell: ({ row }) => {
         const user = row.original;
         const isSelf = user.id === actions.selfId;
-        const isManagingDirector = user.role === MANAGING_DIRECTOR_ROLE;
+        const isManagingDirector = isUserBanProtected(user.role);
         const userRole =
           user.role && isAppRole(user.role) ? user.role : "USER";
         const isPending = actions.pendingUserId === user.id;
 
-        if (isSelf || !actions.canManageUsers) {
+        if (
+          !canShowUserAdminActions(
+            user.id,
+            actions.selfId,
+            actions.canManageUsers,
+          )
+        ) {
           return (
             <div className="text-right text-sm text-muted-foreground">
               {isSelf ? "You" : "—"}

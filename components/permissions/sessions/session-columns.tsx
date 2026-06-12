@@ -6,6 +6,7 @@ import type { SessionRow } from "@/app/actions/permissions/sessions";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { canDeleteSessionToken } from "@/lib/permissions/session-guards";
 
 function parseBrowser(userAgent: string): string | null {
   if (/Edg\//.test(userAgent)) return "Edge";
@@ -25,7 +26,7 @@ function parseOs(userAgent: string): string | null {
   return null;
 }
 
-function formatUserAgent(userAgent: string | null) {
+export function formatUserAgent(userAgent: string | null) {
   if (!userAgent) return "Unknown device";
 
   const browser = parseBrowser(userAgent);
@@ -128,10 +129,9 @@ export function createSessionColumns({
       id: "actions",
       cell: ({ row }) => {
         const session = row.original;
-        const isCurrent = session.token === currentSessionToken;
         const isDeleting = deletingToken === session.token;
 
-        if (isCurrent) {
+        if (!canDeleteSessionToken(session.token, currentSessionToken)) {
           return (
             <div className="text-right text-sm text-muted-foreground">—</div>
           );

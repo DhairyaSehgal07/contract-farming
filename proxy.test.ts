@@ -84,6 +84,37 @@ describe("proxy", () => {
       headers: request.headers,
     });
   });
+
+  it("redirects revoked sessions from the dashboard to signin", async () => {
+    getSession.mockResolvedValue(null);
+
+    const response = await proxy(createNextRequest("/"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/signin",
+    );
+  });
+
+  it("redirects revoked sessions from permissions pages to signin", async () => {
+    getSession.mockResolvedValue(null);
+
+    const response = await proxy(createNextRequest("/permissions/sessions"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/signin",
+    );
+  });
+
+  it("allows authenticated users to access permissions users page", async () => {
+    getSession.mockResolvedValue(mockSession);
+
+    const response = await proxy(createNextRequest("/permissions/users"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
 });
 
 describe("proxy config", () => {
