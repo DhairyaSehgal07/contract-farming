@@ -9,7 +9,7 @@ import { MasterSectionHeader } from "@/components/master/master-section-header";
 import { MasterTableSkeleton } from "@/components/master/master-table-skeleton";
 import { RequisitionApproveDialog } from "@/components/requisition/requisition-approve-dialog";
 import { createRequisitionColumns } from "@/components/requisition/requisition-columns";
-import { RequisitionFormDialog } from "@/components/requisition/requisition-form-dialog";
+import { RequisitionFormSheet } from "@/components/requisition/requisition-form-sheet";
 import { RequisitionRejectDialog } from "@/components/requisition/requisition-reject-dialog";
 import {
   useApproveRequisition,
@@ -157,7 +157,7 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
         />
       )}
 
-      <RequisitionFormDialog
+      <RequisitionFormSheet
         open={formOpen}
         onOpenChange={setFormOpen}
         mode={formMode}
