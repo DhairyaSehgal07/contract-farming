@@ -53,6 +53,30 @@ describe("authorization", () => {
     );
   });
 
+  it("checks requisition approve grants for non-director roles", async () => {
+    findMany.mockImplementation(({ where }) => {
+      if (where.role === Role.PROGRAMME_MANAGER) {
+        return Promise.resolve([
+          {
+            id: "1",
+            role: Role.PROGRAMME_MANAGER,
+            resource: "requisition",
+            action: "approve",
+          },
+        ]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    await expect(
+      roleHasPermission(Role.PROGRAMME_MANAGER, "requisition", "approve"),
+    ).resolves.toBe(true);
+    await expect(
+      roleHasPermission(Role.FIELD_OFFICER, "requisition", "approve"),
+    ).resolves.toBe(false);
+  });
+
   it("resolves effective role from session user role", () => {
     const session = {
       ...mockSession,

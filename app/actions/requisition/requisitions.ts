@@ -1,6 +1,8 @@
 "use server";
 
 import { RequisitionStatus } from "@/app/generated/prisma/client";
+import { getEffectiveRole } from "@/lib/auth/authorization";
+import { MANAGING_DIRECTOR_ROLE } from "@/lib/auth/permission-catalog";
 import { getServerSession } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import {
@@ -11,6 +13,7 @@ import {
 import { requireAuthAction } from "@/lib/schemas/master/auth";
 import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 import {
+  requireRequisitionApproveAction,
   requireRequisitionReadAction,
   requireRequisitionWriteAction,
 } from "@/lib/schemas/requisition/auth";
@@ -18,6 +21,8 @@ import {
   type CreateRequisitionInput,
   createRequisitionSchema,
   normalizeRequisitionInput,
+  type RejectRequisitionInput,
+  rejectRequisitionSchema,
   type UpdateRequisitionInput,
   updateRequisitionSchema,
 } from "@/lib/schemas/requisition/requisition";
@@ -104,6 +109,34 @@ async function getWritableRequisition(
 
   if (requisition.status !== RequisitionStatus.PENDING) {
     return actionError("Only pending requisitions can be changed.");
+  }
+
+  return actionSuccess({ id: requisition.id });
+}
+
+async function getApprovableRequisition(
+  id: string,
+  reviewerId: string,
+  reviewerRole: ReturnType<typeof getEffectiveRole>,
+): Promise<ActionResult<{ id: string }>> {
+  const requisition = await prisma.requisition.findUnique({
+    where: { id },
+    select: { id: true, status: true, createdById: true },
+  });
+
+  if (!requisition) {
+    return actionError("Requisition not found.");
+  }
+
+  if (requisition.status !== RequisitionStatus.PENDING) {
+    return actionError("Only pending requisitions can be approved or rejected.");
+  }
+
+  if (
+    requisition.createdById === reviewerId &&
+    reviewerRole !== MANAGING_DIRECTOR_ROLE
+  ) {
+    return actionError("You cannot approve or reject your own requisition.");
   }
 
   return actionSuccess({ id: requisition.id });
@@ -261,6 +294,92 @@ export async function deleteRequisition(id: string): Promise<ActionResult> {
   try {
     await prisma.requisition.delete({ where: { id } });
     return actionSuccess(undefined);
+  } catch (error) {
+    return actionError(getPrismaErrorMessage(error, "requisition"));
+  }
+}
+
+export async function approveRequisition(
+  id: string,
+): Promise<ActionResult<RequisitionRow>> {
+  const authError = await requireRequisitionApproveAction();
+  if (authError) return authError;
+
+  const sessionError = await requireAuthAction();
+  if (sessionError) return sessionError;
+
+  const session = await getServerSession();
+  if (!session) {
+    return actionError("You must be signed in to perform this action.");
+  }
+
+  if (!id) {
+    return actionError("ID is required.");
+  }
+
+  const role = getEffectiveRole(session);
+  const existing = await getApprovableRequisition(id, session.user.id, role);
+  if (!existing.success) {
+    return existing;
+  }
+
+  try {
+    const requisition = await prisma.requisition.update({
+      where: { id },
+      data: {
+        status: RequisitionStatus.APPROVED,
+        reviewedById: session.user.id,
+        reviewedAt: new Date(),
+        rejectionRemarks: null,
+      },
+      include: requisitionInclude,
+    });
+
+    return actionSuccess(serializeRequisition(requisition));
+  } catch (error) {
+    return actionError(getPrismaErrorMessage(error, "requisition"));
+  }
+}
+
+export async function rejectRequisition(
+  input: RejectRequisitionInput,
+): Promise<ActionResult<RequisitionRow>> {
+  const authError = await requireRequisitionApproveAction();
+  if (authError) return authError;
+
+  const sessionError = await requireAuthAction();
+  if (sessionError) return sessionError;
+
+  const session = await getServerSession();
+  if (!session) {
+    return actionError("You must be signed in to perform this action.");
+  }
+
+  const parsed = rejectRequisitionSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const { id, rejectionRemarks } = parsed.data;
+  const role = getEffectiveRole(session);
+  const existing = await getApprovableRequisition(id, session.user.id, role);
+  if (!existing.success) {
+    return existing;
+  }
+
+  try {
+    const requisition = await prisma.requisition.update({
+      where: { id },
+      data: {
+        status: RequisitionStatus.REJECTED,
+        reviewedById: session.user.id,
+        reviewedAt: new Date(),
+        rejectionRemarks,
+      },
+      include: requisitionInclude,
+    });
+
+    return actionSuccess(serializeRequisition(requisition));
   } catch (error) {
     return actionError(getPrismaErrorMessage(error, "requisition"));
   }

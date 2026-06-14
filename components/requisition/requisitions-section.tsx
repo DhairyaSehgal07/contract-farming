@@ -7,21 +7,31 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DeleteConfirmDialog } from "@/components/master/delete-confirm-dialog";
 import { MasterSectionHeader } from "@/components/master/master-section-header";
 import { MasterTableSkeleton } from "@/components/master/master-table-skeleton";
+import { RequisitionApproveDialog } from "@/components/requisition/requisition-approve-dialog";
 import { createRequisitionColumns } from "@/components/requisition/requisition-columns";
 import { RequisitionFormDialog } from "@/components/requisition/requisition-form-dialog";
+import { RequisitionRejectDialog } from "@/components/requisition/requisition-reject-dialog";
 import {
+  useApproveRequisition,
   useCreateRequisition,
   useDeleteRequisition,
+  useRejectRequisition,
   useRequisitions,
   useUpdateRequisition,
 } from "@/hooks/requisition/use-requisitions";
 import type { RequisitionFormInput } from "@/lib/schemas/requisition/requisition";
 
-export function RequisitionsSection() {
+type RequisitionsSectionProps = {
+  canApprove: boolean;
+};
+
+export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
   const { data = [], isPending, isError, error } = useRequisitions();
   const createMutation = useCreateRequisition();
   const updateMutation = useUpdateRequisition();
   const deleteMutation = useDeleteRequisition();
+  const approveMutation = useApproveRequisition();
+  const rejectMutation = useRejectRequisition();
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -30,10 +40,17 @@ export function RequisitionsSection() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingRequisition, setDeletingRequisition] =
     useState<RequisitionRow | null>(null);
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approvingRequisition, setApprovingRequisition] =
+    useState<RequisitionRow | null>(null);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectingRequisition, setRejectingRequisition] =
+    useState<RequisitionRow | null>(null);
 
   const columns = useMemo<ColumnDef<RequisitionRow>[]>(
     () =>
       createRequisitionColumns({
+        canApprove,
         onEdit: (row) => {
           setFormMode("edit");
           setEditingRequisition(row);
@@ -43,8 +60,16 @@ export function RequisitionsSection() {
           setDeletingRequisition(row);
           setDeleteOpen(true);
         },
+        onApprove: (row) => {
+          setApprovingRequisition(row);
+          setApproveOpen(true);
+        },
+        onReject: (row) => {
+          setRejectingRequisition(row);
+          setRejectOpen(true);
+        },
       }),
-    [],
+    [canApprove],
   );
 
   function handleCreateOpen() {
@@ -83,6 +108,31 @@ export function RequisitionsSection() {
         setDeletingRequisition(null);
       },
     });
+  }
+
+  function handleApproveConfirm() {
+    if (!approvingRequisition) return;
+
+    approveMutation.mutate(approvingRequisition.id, {
+      onSuccess: () => {
+        setApproveOpen(false);
+        setApprovingRequisition(null);
+      },
+    });
+  }
+
+  function handleRejectConfirm(rejectionRemarks: string) {
+    if (!rejectingRequisition) return;
+
+    rejectMutation.mutate(
+      { id: rejectingRequisition.id, rejectionRemarks },
+      {
+        onSuccess: () => {
+          setRejectOpen(false);
+          setRejectingRequisition(null);
+        },
+      },
+    );
   }
 
   return (
@@ -127,6 +177,22 @@ export function RequisitionsSection() {
         }
         onConfirm={handleDeleteConfirm}
         isPending={deleteMutation.isPending}
+      />
+
+      <RequisitionApproveDialog
+        open={approveOpen}
+        onOpenChange={setApproveOpen}
+        farmerName={approvingRequisition?.farmer.name ?? ""}
+        onConfirm={handleApproveConfirm}
+        isPending={approveMutation.isPending}
+      />
+
+      <RequisitionRejectDialog
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        farmerName={rejectingRequisition?.farmer.name ?? ""}
+        onConfirm={handleRejectConfirm}
+        isPending={rejectMutation.isPending}
       />
     </div>
   );

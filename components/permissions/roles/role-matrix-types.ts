@@ -9,6 +9,7 @@ export type RoleMatrixRow = {
   resource: AppResource;
   read: boolean | null;
   write: boolean | null;
+  approve: boolean | null;
 };
 
 function grantKey(resource: AppResource, action: AppAction) {
@@ -34,9 +35,10 @@ export function buildRoleMatrixRows(
     resource,
     read: actionValue(resource, "read", grants),
     write: actionValue(resource, "write", grants),
+    approve: actionValue(resource, "approve", grants),
   }));
 }
 
 export function rowHasAnyGrant(row: RoleMatrixRow): boolean {
-  return row.read === true || row.write === true;
+  return row.read === true || row.write === true || row.approve === true;
 }

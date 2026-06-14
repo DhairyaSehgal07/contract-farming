@@ -65,4 +65,26 @@ describe("updateRolePermissions", () => {
     expect(result.success).toBe(true);
     expect(prisma.$transaction).toHaveBeenCalled();
   });
+
+  it("accepts requisition approve grants", async () => {
+    const result = await updateRolePermissions({
+      role: Role.PROGRAMME_MANAGER,
+      grants: [{ resource: "requisition", action: "approve" }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it("rejects approve grants on resources without approve action", async () => {
+    const result = await updateRolePermissions({
+      role: Role.USER,
+      grants: [{ resource: "dashboard", action: "approve" }],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain("Invalid permission");
+    }
+  });
 });

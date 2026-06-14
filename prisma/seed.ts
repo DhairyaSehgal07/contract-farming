@@ -57,6 +57,10 @@ const REQUISITION_ACCESS = [
   { resource: "requisition", action: "write" },
 ] as const;
 
+const REQUISITION_APPROVE = [
+  { resource: "requisition", action: "approve" },
+] as const;
+
 const DEFAULT_ROLE_PERMISSIONS: Record<
   Role,
   { resource: string; action: string }[]
@@ -67,10 +71,12 @@ const DEFAULT_ROLE_PERMISSIONS: Record<
     { resource: "master", action: "read" },
     { resource: "master", action: "write" },
     ...REQUISITION_ACCESS,
+    ...REQUISITION_APPROVE,
   ],
   [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [
     ...DASHBOARD_READ,
     ...REQUISITION_ACCESS,
+    ...REQUISITION_APPROVE,
   ],
   [Role.FIELD_OPERATIONS_MANAGER]: [...DASHBOARD_READ, ...REQUISITION_ACCESS],
   [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [...DASHBOARD_READ],

@@ -3,8 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  approveRequisition,
   createRequisition,
   deleteRequisition,
+  rejectRequisition,
   updateRequisition,
 } from "@/app/actions/requisition/requisitions";
 import { requisitionKeys } from "@/lib/query/keys";
@@ -15,6 +17,7 @@ import {
 } from "@/lib/query/requisition-fetchers";
 import type {
   CreateRequisitionInput,
+  RejectRequisitionInput,
   UpdateRequisitionInput,
 } from "@/lib/schemas/requisition/requisition";
 
@@ -94,6 +97,48 @@ export function useDeleteRequisition() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       toast.success("Requisition deleted");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useApproveRequisition() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const result = await approveRequisition(id);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      toast.success("Requisition approved");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useRejectRequisition() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: RejectRequisitionInput) => {
+      const result = await rejectRequisition(input);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      toast.success("Requisition rejected");
     },
     onError: (error: Error) => {
       toast.error(error.message);

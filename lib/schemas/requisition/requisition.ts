@@ -34,6 +34,16 @@ export type RequisitionFormInput = z.infer<typeof requisitionFormSchema>;
 export type CreateRequisitionInput = z.infer<typeof createRequisitionSchema>;
 export type UpdateRequisitionInput = z.infer<typeof updateRequisitionSchema>;
 
+export const rejectRequisitionSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  rejectionRemarks: z
+    .string()
+    .trim()
+    .min(3, "Rejection remarks must be at least 3 characters"),
+});
+
+export type RejectRequisitionInput = z.infer<typeof rejectRequisitionSchema>;
+
 function emptyToUndefined(value: string | undefined) {
   return value?.trim() ? value.trim() : undefined;
 }

@@ -14,7 +14,7 @@ export const APP_RESOURCES = [
 
 export type AppResource = (typeof APP_RESOURCES)[number];
 
-export const APP_ACTIONS = ["read", "write"] as const;
+export const APP_ACTIONS = ["read", "write", "approve"] as const;
 
 export type AppAction = (typeof APP_ACTIONS)[number];
 
@@ -27,7 +27,7 @@ export const PERMISSION_CATALOG: Record<AppResource, readonly AppAction[]> = {
   dashboard: ["read"],
   master: ["read", "write"],
   permissions: ["read", "write"],
-  requisition: ["read", "write"],
+  requisition: ["read", "write", "approve"],
 };
 
 export { MANAGING_DIRECTOR_ROLE, EDITABLE_ROLES, ROLES as ALL_ROLES };

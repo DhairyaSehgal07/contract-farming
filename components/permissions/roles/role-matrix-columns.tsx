@@ -106,5 +106,18 @@ export function createRoleMatrixColumns({
         />
       ),
     },
+    {
+      accessorKey: "approve",
+      header: () => <ActionHeader title="Approve" />,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <PermissionCheckbox
+          resource={row.original.resource}
+          action="approve"
+          value={row.original.approve}
+          onToggle={onToggle}
+        />
+      ),
+    },
   ];
 }

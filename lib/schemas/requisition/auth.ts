@@ -8,3 +8,7 @@ export async function requireRequisitionReadAction(): Promise<ActionResult<never
 export async function requireRequisitionWriteAction(): Promise<ActionResult<never> | null> {
   return requireAppPermissionAction("requisition", "write");
 }
+
+export async function requireRequisitionApproveAction(): Promise<ActionResult<never> | null> {
+  return requireAppPermissionAction("requisition", "approve");
+}

@@ -17,8 +17,11 @@ import {
 import { parseDateOnly } from "@/lib/date";
 
 type RequisitionColumnActions = {
+  canApprove: boolean;
   onEdit: (row: RequisitionRow) => void;
   onDelete: (row: RequisitionRow) => void;
+  onApprove: (row: RequisitionRow) => void;
+  onReject: (row: RequisitionRow) => void;
 };
 
 function formatDate(value: string) {
@@ -35,15 +38,32 @@ function formatDecimal(value: string | null) {
 
 function statusVariant(
   status: RequisitionRow["status"],
-): "default" | "secondary" | "destructive" | "outline" {
+): "default" | "destructive" | "outline" {
   switch (status) {
     case "APPROVED":
       return "default";
     case "REJECTED":
       return "destructive";
     default:
-      return "secondary";
+      return "outline";
   }
+}
+
+function statusLabel(status: RequisitionRow["status"]) {
+  switch (status) {
+    case "APPROVED":
+      return "Approved";
+    case "REJECTED":
+      return "Rejected";
+    default:
+      return "Pending";
+  }
+}
+
+function RequisitionStatusBadge({ status }: { status: RequisitionRow["status"] }) {
+  return (
+    <Badge variant={statusVariant(status)}>{statusLabel(status)}</Badge>
+  );
 }
 
 export function createRequisitionColumns(
@@ -90,9 +110,7 @@ export function createRequisitionColumns(
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant={statusVariant(row.original.status)}>
-          {row.original.status}
-        </Badge>
+        <RequisitionStatusBadge status={row.original.status} />
       ),
     },
     {
@@ -104,6 +122,7 @@ export function createRequisitionColumns(
       id: "actions",
       cell: ({ row }) => {
         const isPending = row.original.status === "PENDING";
+        const showApprovalActions = actions.canApprove && isPending;
 
         return (
           <DropdownMenu>
@@ -115,6 +134,22 @@ export function createRequisitionColumns(
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              {showApprovalActions ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => actions.onApprove(row.original)}
+                  >
+                    Approve
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => actions.onReject(row.original)}
+                  >
+                    Reject
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
               <DropdownMenuItem
                 disabled={!isPending}
                 onClick={() => actions.onEdit(row.original)}

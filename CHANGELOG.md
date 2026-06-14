@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.2] - 2026-06-14
+
+### Features
+
+- Add requisition approve and reject workflow with confirmation dialogs
+- Add `approve` permission action to the RBAC catalog and role matrix
+- Gate approve/reject UI and server actions by `requisition:approve` permission
+
+### Enhancements
+
+- Show requisition status badges with clearer labels (Pending, Approved, Rejected)
+- Prevent self-approval except for the Managing Director role
+- Seed Programme Manager and Accounts Settlements Manager with requisition approve grants
+
+### Tests
+
+- Add approve/reject server action tests
+- Add authorization and role matrix tests for the approve permission
+
 ## [0.2.1] - 2026-06-12
 
 ### Features
