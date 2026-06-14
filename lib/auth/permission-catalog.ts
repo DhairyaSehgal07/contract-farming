@@ -5,7 +5,12 @@ import {
   type AppRole,
 } from "@/lib/auth/roles";
 
-export const APP_RESOURCES = ["dashboard", "master", "permissions"] as const;
+export const APP_RESOURCES = [
+  "dashboard",
+  "master",
+  "permissions",
+  "requisition",
+] as const;
 
 export type AppResource = (typeof APP_RESOURCES)[number];
 
@@ -22,6 +27,7 @@ export const PERMISSION_CATALOG: Record<AppResource, readonly AppAction[]> = {
   dashboard: ["read"],
   master: ["read", "write"],
   permissions: ["read", "write"],
+  requisition: ["read", "write"],
 };
 
 export { MANAGING_DIRECTOR_ROLE, EDITABLE_ROLES, ROLES as ALL_ROLES };

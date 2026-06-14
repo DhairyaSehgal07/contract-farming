@@ -6,7 +6,10 @@ import {
   actionError,
   actionSuccess,
 } from "@/lib/schemas/master/action-result";
-import { requireMasterReadAction, requireMasterWriteAction } from "@/lib/schemas/master/auth";
+import {
+  requireMasterReadAction,
+  requireMasterWriteAction,
+} from "@/lib/schemas/master/auth";
 import {
   type CreateFarmerInput,
   createFarmerSchema,

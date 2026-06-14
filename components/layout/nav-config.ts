@@ -1,4 +1,5 @@
 import {
+  ClipboardList,
   Database,
   LayoutDashboard,
   Shield,
@@ -26,6 +27,13 @@ export const navItems: NavItem[] = [
     requiredAppPermission: { resource: "dashboard", action: "read" },
   },
   {
+    name: "Requisition",
+    href: "/requisition",
+    icon: ClipboardList,
+    activePaths: ["/requisition"],
+    requiredAppPermission: { resource: "requisition", action: "read" },
+  },
+  {
     name: "Master",
     href: "/master",
     icon: Database,
@@ -45,6 +53,7 @@ export const routeTitles: Record<string, string> = {
   "/": "Dashboard",
   "/master": "Master",
   "/permissions": "Permissions",
+  "/requisition": "Requisition",
   "/permissions/roles": "Role permissions",
   "/permissions/users": "Users",
   "/permissions/sessions": "Sessions",

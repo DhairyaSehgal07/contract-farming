@@ -21,6 +21,12 @@ enum Role {
   USER
 }
 
+enum RequisitionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String    @id
   name          String
@@ -35,8 +41,10 @@ model User {
   station       Station?  @relation(fields: [stationId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  sessions             Session[]
+  accounts             Account[]
+  requisitionsCreated  Requisition[] @relation("RequisitionCreatedBy")
+  requisitionsReviewed Requisition[] @relation("RequisitionReviewedBy")
 
   @@index([stationId])
   @@map("user")
@@ -146,8 +154,9 @@ model Farmer {
   localityId String
   locality   Locality @relation(fields: [localityId], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  requisitions Requisition[]
 
   @@index([stationId])
   @@index([localityId])
@@ -159,8 +168,9 @@ model Variety {
   id        String   @id @default(cuid())
   name      String   @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  requisitions Requisition[]
 
   @@map("variety")
 }
@@ -194,4 +204,38 @@ model RolePermission {
   @@unique([role, resource, action])
   @@index([role])
   @@map("role_permission")
+}
+
+model Requisition {
+  id                  String            @id @default(cuid())
+  requisitionDate     DateTime          @db.Date
+  expectedDeliveryDate DateTime         @db.Date
+  acres               Decimal?          @db.Decimal(10, 2)
+  quantity            Decimal?          @db.Decimal(12, 2)
+  status              RequisitionStatus @default(PENDING)
+  rejectionRemarks    String?
+
+  farmerId  String
+  farmer    Farmer  @relation(fields: [farmerId], references: [id], onDelete: Restrict)
+  varietyId String
+  variety   Variety @relation(fields: [varietyId], references: [id], onDelete: Restrict)
+
+  createdById String
+  createdBy   User   @relation("RequisitionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  reviewedById String?
+  reviewedBy   User?     @relation("RequisitionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([farmerId])
+  @@index([varietyId])
+  @@index([createdById])
+  @@index([reviewedById])
+  @@index([status])
+  @@index([requisitionDate])
+  @@index([expectedDeliveryDate])
+  @@map("requisition")
 }

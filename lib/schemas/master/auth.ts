@@ -21,14 +21,10 @@ export async function requireAuthAction(): Promise<ActionResult<never> | null> {
   return null;
 }
 
-export async function requireMasterReadAction(): Promise<
-  ActionResult<never> | null
-> {
+export async function requireMasterReadAction(): Promise<ActionResult<never> | null> {
   return requireAppPermissionAction("master", "read");
 }
 
-export async function requireMasterWriteAction(): Promise<
-  ActionResult<never> | null
-> {
+export async function requireMasterWriteAction(): Promise<ActionResult<never> | null> {
   return requireAppPermissionAction("master", "write");
 }

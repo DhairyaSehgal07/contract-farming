@@ -41,7 +41,10 @@ describe("UsersSection", () => {
     vi.clearAllMocks();
     revokeUserSessions.mockResolvedValue({ error: null });
     banUser.mockResolvedValue({ error: null });
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
   });
 
   it("does not show actions for the signed-in user", () => {
@@ -113,7 +116,10 @@ describe("UsersSection", () => {
 
   it("does not ban when confirmation is cancelled", async () => {
     const user = userEvent.setup();
-    vi.stubGlobal("confirm", vi.fn(() => false));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false),
+    );
 
     render(
       <UsersSection

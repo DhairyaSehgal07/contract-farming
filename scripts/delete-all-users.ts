@@ -13,7 +13,9 @@ async function main() {
 
   const { count } = await prisma.user.deleteMany();
 
-  console.log(`Deleted ${count} user(s) (sessions and accounts cascade-deleted).`);
+  console.log(
+    `Deleted ${count} user(s) (sessions and accounts cascade-deleted).`,
+  );
 
   await prisma.$disconnect();
 }

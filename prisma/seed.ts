@@ -2,7 +2,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { generateId } from "better-auth";
 import { hashPassword } from "better-auth/crypto";
 import { config } from "dotenv";
-import { PrismaClient, Role } from "../app/generated/prisma/client";
+import {
+  PrismaClient,
+  RequisitionStatus,
+  Role,
+} from "../app/generated/prisma/client";
 
 config({ override: true });
 
@@ -11,27 +15,27 @@ const SEED_PASSWORD = "12345678";
 const SEED_USERS = [
   {
     email: "managing.director@example.com",
-    name: "Managing Director",
+    name: "Tanvir Bhatti",
     role: Role.MANAGING_DIRECTOR,
   },
   {
     email: "programme.manager@example.com",
-    name: "Programme Manager",
+    name: "Dr Sridhar",
     role: Role.PROGRAMME_MANAGER,
   },
   {
     email: "accounts.settlements@example.com",
-    name: "Accounts Settlements Manager",
+    name: "Ashok",
     role: Role.ACCOUNTS_SETTLEMENTS_MANAGER,
   },
   {
     email: "field.operations@example.com",
-    name: "Field Operations Manager",
+    name: "Jyot Singh",
     role: Role.FIELD_OPERATIONS_MANAGER,
   },
   {
     email: "accounts.seeds@example.com",
-    name: "Accounts Seeds Supply Manager",
+    name: "Harsh",
     role: Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER,
   },
   {
@@ -41,17 +45,17 @@ const SEED_USERS = [
   },
   {
     email: "field.officer@example.com",
-    name: "Field Officer",
+    name: "Deepak",
     role: Role.FIELD_OFFICER,
-  },
-  {
-    email: "user@example.com",
-    name: "Standard User",
-    role: Role.USER,
   },
 ] as const;
 
 const DASHBOARD_READ = [{ resource: "dashboard", action: "read" }] as const;
+
+const REQUISITION_ACCESS = [
+  { resource: "requisition", action: "read" },
+  { resource: "requisition", action: "write" },
+] as const;
 
 const DEFAULT_ROLE_PERMISSIONS: Record<
   Role,
@@ -62,14 +66,20 @@ const DEFAULT_ROLE_PERMISSIONS: Record<
     { resource: "dashboard", action: "read" },
     { resource: "master", action: "read" },
     { resource: "master", action: "write" },
+    ...REQUISITION_ACCESS,
   ],
-  [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [...DASHBOARD_READ],
-  [Role.FIELD_OPERATIONS_MANAGER]: [...DASHBOARD_READ],
+  [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [
+    ...DASHBOARD_READ,
+    ...REQUISITION_ACCESS,
+  ],
+  [Role.FIELD_OPERATIONS_MANAGER]: [...DASHBOARD_READ, ...REQUISITION_ACCESS],
   [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [...DASHBOARD_READ],
   [Role.LOGISTICS_EXECUTIVE]: [...DASHBOARD_READ],
   [Role.FIELD_OFFICER]: [...DASHBOARD_READ],
   [Role.USER]: [...DASHBOARD_READ],
 };
+
+const SEED_REQUISITION_ID = "seed-requisition-001";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
@@ -180,6 +190,44 @@ async function seedRolePermissions() {
   });
 }
 
+async function seedRequisition({
+  farmerId,
+  varietyId,
+  createdById,
+}: {
+  farmerId: string;
+  varietyId: string;
+  createdById: string;
+}) {
+  await prisma.requisition.upsert({
+    where: { id: SEED_REQUISITION_ID },
+    create: {
+      id: SEED_REQUISITION_ID,
+      requisitionDate: new Date("2026-06-01"),
+      expectedDeliveryDate: new Date("2026-06-15"),
+      acres: 2.5,
+      quantity: 100,
+      status: RequisitionStatus.PENDING,
+      farmerId,
+      varietyId,
+      createdById,
+    },
+    update: {
+      requisitionDate: new Date("2026-06-01"),
+      expectedDeliveryDate: new Date("2026-06-15"),
+      acres: 2.5,
+      quantity: 100,
+      status: RequisitionStatus.PENDING,
+      rejectionRemarks: null,
+      reviewedById: null,
+      reviewedAt: null,
+      farmerId,
+      varietyId,
+      createdById,
+    },
+  });
+}
+
 async function main() {
   await seedUsers();
   await seedRolePermissions();
@@ -228,7 +276,7 @@ async function main() {
     });
   }
 
-  await prisma.farmer.upsert({
+  const farmer = await prisma.farmer.upsert({
     where: { accountNumber: "1" },
     create: {
       name: "Amandeep Singh S/O Kashmir Singh",
@@ -259,6 +307,19 @@ async function main() {
     },
   });
 
+  const variety = await prisma.variety.findUniqueOrThrow({
+    where: { name: "Himalini" },
+  });
+  const createdBy = await prisma.user.findUniqueOrThrow({
+    where: { email: "field.officer@example.com" },
+  });
+
+  await seedRequisition({
+    farmerId: farmer.id,
+    varietyId: variety.id,
+    createdById: createdBy.id,
+  });
+
   console.log("Seed complete:");
   for (const user of SEED_USERS) {
     console.log(`  user: ${user.email} / ${SEED_PASSWORD} (${user.role})`);
@@ -267,6 +328,7 @@ async function main() {
   console.log(`  ${GENERATIONS.length} generations`);
   console.log(`  ${SIZES.length} sizes`);
   console.log("  1 station (Bazpur), 1 locality (Puranpur), 1 farmer");
+  console.log("  1 requisition (PENDING, Himalini, 2.5 acres, 100 qty)");
   console.log("  default role permissions seeded");
 }
 

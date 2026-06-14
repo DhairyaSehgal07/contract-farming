@@ -82,10 +82,7 @@ function mergeSetCookiesIntoHeaders(
   return merged;
 }
 
-export async function signInTestUser(
-  email: string,
-  password = TEST_PASSWORD,
-) {
+export async function signInTestUser(email: string, password = TEST_PASSWORD) {
   const result = await auth.api.signInEmail({
     body: { email, password },
     headers: new Headers(),

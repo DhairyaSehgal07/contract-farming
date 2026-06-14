@@ -15,10 +15,7 @@ vi.mock("next/cache", () => ({
 }));
 
 import prisma from "@/lib/prisma";
-import {
-  getEffectiveRole,
-  roleHasPermission,
-} from "@/lib/auth/authorization";
+import { getEffectiveRole, roleHasPermission } from "@/lib/auth/authorization";
 
 const findMany = vi.mocked(prisma.rolePermission.findMany);
 
@@ -51,9 +48,9 @@ describe("authorization", () => {
     await expect(
       roleHasPermission(Role.USER, "dashboard", "read"),
     ).resolves.toBe(true);
-    await expect(
-      roleHasPermission(Role.USER, "master", "read"),
-    ).resolves.toBe(false);
+    await expect(roleHasPermission(Role.USER, "master", "read")).resolves.toBe(
+      false,
+    );
   });
 
   it("resolves effective role from session user role", () => {

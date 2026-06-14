@@ -16,8 +16,7 @@ export function ImpersonationIndicator() {
   return (
     <div className="fixed bottom-4 left-4 z-50 flex items-center gap-3 rounded-lg border border-destructive/50 bg-background p-3 shadow-lg">
       <p className="text-sm">
-        Impersonating{" "}
-        <span className="font-medium">{session.user.name}</span>
+        Impersonating <span className="font-medium">{session.user.name}</span>
         {session.user.role ? (
           <span className="text-muted-foreground"> ({session.user.role})</span>
         ) : null}

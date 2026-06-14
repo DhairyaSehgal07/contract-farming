@@ -17,7 +17,8 @@ import type {
 export function useLocalities(stationId: string | null) {
   return useQuery({
     queryKey: masterKeys.localities(stationId),
-    queryFn: () => (stationId ? fetchLocalities(stationId) : Promise.resolve([])),
+    queryFn: () =>
+      stationId ? fetchLocalities(stationId) : Promise.resolve([]),
     enabled: Boolean(stationId),
   });
 }

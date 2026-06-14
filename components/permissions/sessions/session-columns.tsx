@@ -13,7 +13,8 @@ function parseBrowser(userAgent: string): string | null {
   if (/OPR\/|Opera/.test(userAgent)) return "Opera";
   if (/Firefox\//.test(userAgent)) return "Firefox";
   if (/Chrome\//.test(userAgent) && !/Edg\//.test(userAgent)) return "Chrome";
-  if (/Safari\//.test(userAgent) && !/Chrome\//.test(userAgent)) return "Safari";
+  if (/Safari\//.test(userAgent) && !/Chrome\//.test(userAgent))
+    return "Safari";
   return null;
 }
 

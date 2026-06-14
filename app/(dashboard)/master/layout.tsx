@@ -1,10 +1,7 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { MasterTabs } from "@/components/master/master-tabs";
-import {
-  getEffectiveRole,
-  roleHasPermission,
-} from "@/lib/auth/authorization";
+import { getEffectiveRole, roleHasPermission } from "@/lib/auth/authorization";
 import { getServerSession } from "@/lib/auth/session";
 import { prefetchAllMaster } from "@/lib/query/prefetch-master";
 

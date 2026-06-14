@@ -9,10 +9,7 @@ import {
   buildRoleMatrixRows,
   type RoleMatrixRow,
 } from "@/components/permissions/roles/role-matrix-types";
-import {
-  formatRoleLabel,
-  type EditableRole,
-} from "@/lib/auth/roles";
+import { formatRoleLabel, type EditableRole } from "@/lib/auth/roles";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -158,7 +155,9 @@ export function RoleMatrixSection() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-heading text-base">Permissions</CardTitle>
+            <CardTitle className="font-heading text-base">
+              Permissions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable

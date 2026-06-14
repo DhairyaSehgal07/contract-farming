@@ -32,9 +32,6 @@ function ColumnCell<TData>({
   return <>{flexRender(cell.column.columnDef.cell, cell.getContext())}</>;
 }
 
-export function renderColumnCell<TData>(
-  column: ColumnDef<TData>,
-  row: TData,
-) {
+export function renderColumnCell<TData>(column: ColumnDef<TData>, row: TData) {
   return render(<ColumnCell column={column} row={row} />);
 }

@@ -88,9 +88,7 @@ export async function requireAppPermissionAction(
   return null;
 }
 
-export async function requireManagingDirectorAdminAction(): Promise<
-  ActionResult<never> | null
-> {
+export async function requireManagingDirectorAdminAction(): Promise<ActionResult<never> | null> {
   const session = await getServerSession();
   if (!session) {
     return actionError("You must be signed in to perform this action.");

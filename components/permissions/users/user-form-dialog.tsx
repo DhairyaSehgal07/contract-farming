@@ -201,9 +201,7 @@ export function UserFormDialog(props: UserFormDialogProps) {
                         field.handleChange(event.target.value)
                       }
                       aria-invalid={isInvalid}
-                      autoComplete={
-                        mode === "create" ? "new-password" : "off"
-                      }
+                      autoComplete={mode === "create" ? "new-password" : "off"}
                       placeholder={
                         mode === "edit" ? "Leave blank to keep unchanged" : ""
                       }

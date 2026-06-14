@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 import { navItems } from "@/components/layout/nav-config";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import {
-  getEffectiveRole,
-  roleHasPermission,
-} from "@/lib/auth/authorization";
+import { getEffectiveRole, roleHasPermission } from "@/lib/auth/authorization";
 import { getServerSession } from "@/lib/auth/session";
 
 export default async function DashboardLayout({

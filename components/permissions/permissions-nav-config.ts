@@ -38,7 +38,8 @@ export function isPermissionsNavActive(pathname: string, href: string) {
 
 export function getPermissionsTabValue(pathname: string) {
   return (
-    permissionsNavItems.find((item) => isPermissionsNavActive(pathname, item.href))
-      ?.value ?? "roles"
+    permissionsNavItems.find((item) =>
+      isPermissionsNavActive(pathname, item.href),
+    )?.value ?? "roles"
   );
 }

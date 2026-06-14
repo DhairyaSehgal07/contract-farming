@@ -9,7 +9,11 @@ import type { AppAction, AppResource } from "@/lib/auth/permission-catalog";
 import { cn } from "@/lib/utils";
 
 type RoleMatrixColumnActions = {
-  onToggle: (resource: AppResource, action: AppAction, checked: boolean) => void;
+  onToggle: (
+    resource: AppResource,
+    action: AppAction,
+    checked: boolean,
+  ) => void;
 };
 
 function ActionHeader({ title }: { title: string }) {

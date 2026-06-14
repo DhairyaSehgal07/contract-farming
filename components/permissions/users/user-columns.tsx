@@ -84,13 +84,10 @@ export function createUserColumns(
         <DataTableColumnHeader column={column} title="Role" />
       ),
       cell: ({ row }) => {
-        const isManagingDirector =
-          row.original.role === MANAGING_DIRECTOR_ROLE;
+        const isManagingDirector = row.original.role === MANAGING_DIRECTOR_ROLE;
         return (
           <Badge variant={isManagingDirector ? "default" : "secondary"}>
-            {row.original.role
-              ? formatRoleLabel(row.original.role)
-              : "User"}
+            {row.original.role ? formatRoleLabel(row.original.role) : "User"}
           </Badge>
         );
       },
@@ -114,8 +111,7 @@ export function createUserColumns(
         const user = row.original;
         const isSelf = user.id === actions.selfId;
         const isManagingDirector = isUserBanProtected(user.role);
-        const userRole =
-          user.role && isAppRole(user.role) ? user.role : "USER";
+        const userRole = user.role && isAppRole(user.role) ? user.role : "USER";
         const isPending = actions.pendingUserId === user.id;
 
         if (
@@ -159,9 +155,7 @@ export function createUserColumns(
                 </DropdownMenuItem>
 
                 {!isManagingDirector ? (
-                  <DropdownMenuItem
-                    onClick={() => actions.onImpersonate(user)}
-                  >
+                  <DropdownMenuItem onClick={() => actions.onImpersonate(user)}>
                     <UserCog className="mr-2 size-4" />
                     Impersonate
                   </DropdownMenuItem>
