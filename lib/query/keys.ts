@@ -19,6 +19,7 @@ export const masterKeys = {
 export const requisitionKeys = {
   all: ["requisition"] as const,
   list: () => [...requisitionKeys.all, "list"] as const,
+  detail: (id: string) => [...requisitionKeys.all, "detail", id] as const,
   farmers: () => [...requisitionKeys.all, "farmers"] as const,
   varieties: () => [...requisitionKeys.all, "varieties"] as const,
 };

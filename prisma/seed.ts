@@ -247,6 +247,10 @@ async function seedRequisition({
       rejectionRemarks: null,
       reviewedById: status === RequisitionStatus.PENDING ? null : createdById,
       reviewedAt: status === RequisitionStatus.PENDING ? null : new Date(),
+      approvalDate:
+        status === RequisitionStatus.APPROVED ? new Date("2026-06-10") : null,
+      rejectionDate:
+        status === RequisitionStatus.REJECTED ? new Date("2026-06-10") : null,
       farmerId,
       varietyId,
       createdById,

@@ -1,4 +1,5 @@
 import {
+  getRequisition,
   listRequisitionFarmers,
   listRequisitions,
   listRequisitionVarieties,
@@ -18,6 +19,10 @@ async function unwrap<T>(
 
 export async function fetchRequisitions() {
   return unwrap(listRequisitions());
+}
+
+export async function fetchRequisition(id: string) {
+  return unwrap(getRequisition(id));
 }
 
 export async function fetchRequisitionFarmers() {

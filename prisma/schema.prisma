@@ -183,7 +183,6 @@ model Location {
   updatedAt DateTime @updatedAt
 
   dispatchesFrom Dispatch[] @relation("DispatchFromLocation")
-  dispatchesTo   Dispatch[] @relation("DispatchToLocation")
 
   @@map("location")
 }
@@ -245,6 +244,8 @@ model Requisition {
   reviewedById String?
   reviewedBy   User?     @relation("RequisitionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt   DateTime?
+  approvalDate DateTime? @db.Date
+  rejectionDate DateTime? @db.Date
 
   dispatchAssignments DispatchRequisition[]
 
@@ -267,6 +268,7 @@ model Dispatch {
   dateOfReceiving      DateTime? @db.Date
   truckNumber          String?
   manualGatePassNumber String?
+  weightSlipNumber     String?
   grossWeight          Decimal?  @db.Decimal(12, 2)
   tareWeight           Decimal?  @db.Decimal(12, 2)
   netWeight            Decimal?  @db.Decimal(12, 2)
@@ -278,8 +280,7 @@ model Dispatch {
   generation   Generation? @relation(fields: [generationId], references: [id], onDelete: Restrict)
   locationId   String?
   location     Location?   @relation("DispatchFromLocation", fields: [locationId], references: [id], onDelete: Restrict)
-  toLocationId String?
-  toLocation   Location?   @relation("DispatchToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+  toLocation   String?
 
   requisitions DispatchRequisition[]
 
@@ -289,7 +290,6 @@ model Dispatch {
   @@index([dispatchDate])
   @@index([generationId])
   @@index([locationId])
-  @@index([toLocationId])
   @@map("dispatch")
 }
 

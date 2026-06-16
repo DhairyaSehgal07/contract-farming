@@ -8,6 +8,9 @@ import {
   type CreateDispatchInput,
   createDispatchSchema,
   normalizeCreateDispatchInput,
+  type UpdateDispatchStep2Input,
+  normalizeUpdateDispatchStep2Input,
+  updateDispatchStep2Schema,
 } from "@/lib/schemas/dispatch/dispatch";
 import {
   type ActionResult,
@@ -19,7 +22,6 @@ import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 const dispatchInclude = {
   generation: { select: { name: true } },
   location: { select: { name: true } },
-  toLocation: { select: { name: true } },
   _count: { select: { requisitions: true } },
 } as const;
 
@@ -50,14 +52,20 @@ export type DispatchRow = {
   dateOfReceiving: string | null;
   truckNumber: string | null;
   manualGatePassNumber: string | null;
+  weightSlipNumber: string | null;
+  grossWeight: string | null;
+  tareWeight: string | null;
   netWeight: string | null;
+  averageWeightPerBag: string | null;
   driverMobileNumber: string | null;
   remarks: string | null;
   createdAt: string;
   updatedAt: string;
+  generationId: string | null;
   generation: { name: string } | null;
+  locationId: string | null;
   location: { name: string } | null;
-  toLocation: { name: string } | null;
+  toLocation: string | null;
   requisitionCount: number;
 };
 
@@ -73,12 +81,18 @@ function serializeDispatch(row: DispatchWithRelations): DispatchRow {
     dateOfReceiving: row.dateOfReceiving?.toISOString().slice(0, 10) ?? null,
     truckNumber: row.truckNumber,
     manualGatePassNumber: row.manualGatePassNumber,
+    weightSlipNumber: row.weightSlipNumber,
+    grossWeight: row.grossWeight?.toString() ?? null,
+    tareWeight: row.tareWeight?.toString() ?? null,
     netWeight: row.netWeight?.toString() ?? null,
+    averageWeightPerBag: row.averageWeightPerBag?.toString() ?? null,
     driverMobileNumber: row.driverMobileNumber,
     remarks: row.remarks,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    generationId: row.generationId,
     generation: row.generation,
+    locationId: row.locationId,
     location: row.location,
     toLocation: row.toLocation,
     requisitionCount: row._count.requisitions,
@@ -111,6 +125,8 @@ function serializeDispatchableRequisition(
     createdById: row.createdById,
     reviewedById: row.reviewedById,
     reviewedAt: row.reviewedAt?.toISOString() ?? null,
+    approvalDate: row.approvalDate?.toISOString().slice(0, 10) ?? null,
+    rejectionDate: row.rejectionDate?.toISOString().slice(0, 10) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     farmer: row.farmer,
@@ -261,6 +277,7 @@ export async function createDispatch(
             : null,
           truckNumber: data.truckNumber,
           manualGatePassNumber: data.manualGatePassNumber ?? null,
+          weightSlipNumber: data.weightSlipNumber ?? null,
           driverMobileNumber: data.driverMobileNumber ?? null,
           grossWeight: data.grossWeight ?? null,
           tareWeight: data.tareWeight ?? null,
@@ -269,7 +286,7 @@ export async function createDispatch(
           remarks: data.remarks ?? null,
           generationId: data.generationId,
           locationId: data.locationId ?? null,
-          toLocationId: data.toLocationId ?? null,
+          toLocation: data.toLocation ?? null,
           requisitions: {
             create: data.requisitions.map((selection) => ({
               requisitionId: selection.requisitionId,
@@ -310,6 +327,120 @@ export async function createDispatch(
       return actionError(error.message);
     }
     console.error("createDispatch failed:", error);
+    return actionError(getPrismaErrorMessage(error, "dispatch"));
+  }
+}
+
+export async function updateDispatchStep2(
+  input: UpdateDispatchStep2Input,
+): Promise<ActionResult<DispatchRow>> {
+  const authError = await requireDispatchWriteAction();
+  if (authError) return authError;
+
+  const parsed = updateDispatchStep2Schema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const { id, ...data } = normalizeUpdateDispatchStep2Input(parsed.data);
+
+  try {
+    const dispatch = await prisma.dispatch.update({
+      where: { id },
+      data: {
+        dispatchDate: new Date(`${data.dispatchDate}T00:00:00.000Z`),
+        truckNumber: data.truckNumber,
+        manualGatePassNumber: data.manualGatePassNumber ?? null,
+        weightSlipNumber: data.weightSlipNumber ?? null,
+        driverMobileNumber: data.driverMobileNumber ?? null,
+        grossWeight: data.grossWeight ?? null,
+        tareWeight: data.tareWeight ?? null,
+        netWeight: data.netWeight ?? null,
+        averageWeightPerBag: data.averageWeightPerBag ?? null,
+        remarks: data.remarks ?? null,
+        generationId: data.generationId,
+        locationId: data.locationId ?? null,
+        toLocation: data.toLocation ?? null,
+      },
+      include: dispatchInclude,
+    });
+
+    return actionSuccess(serializeDispatch(dispatch));
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return actionError(error.message);
+    }
+    console.error("updateDispatchStep2 failed:", error);
+    return actionError(getPrismaErrorMessage(error, "dispatch"));
+  }
+}
+
+export async function deleteDispatch(id: string): Promise<ActionResult> {
+  const authError = await requireDispatchWriteAction();
+  if (authError) return authError;
+
+  if (!id) {
+    return actionError("ID is required.");
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const dispatch = await tx.dispatch.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          requisitions: {
+            select: {
+              requisitionId: true,
+              sizeLines: { select: { quantity: true } },
+            },
+          },
+        },
+      });
+
+      if (!dispatch) {
+        throw new Error("Dispatch not found.");
+      }
+
+      for (const item of dispatch.requisitions) {
+        const decrementBy = item.sizeLines.reduce(
+          (sum, line) => sum + Number.parseFloat(line.quantity.toString()),
+          0,
+        );
+
+        const requisition = await tx.requisition.findUnique({
+          where: { id: item.requisitionId },
+          select: { fulfilledQuantity: true },
+        });
+
+        if (!requisition) {
+          throw new Error("Requisition not found.");
+        }
+
+        const fulfilled = Number.parseFloat(requisition.fulfilledQuantity.toString());
+        if (decrementBy > fulfilled) {
+          throw new Error("Cannot reverse dispatch quantities for this requisition.");
+        }
+
+        await tx.requisition.update({
+          where: { id: item.requisitionId },
+          data: {
+            fulfilledQuantity: {
+              decrement: decrementBy,
+            },
+          },
+        });
+      }
+
+      await tx.dispatch.delete({ where: { id: dispatch.id } });
+    });
+
+    return actionSuccess(undefined);
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return actionError(error.message);
+    }
+    console.error("deleteDispatch failed:", error);
     return actionError(getPrismaErrorMessage(error, "dispatch"));
   }
 }

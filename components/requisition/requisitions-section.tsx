@@ -145,7 +145,7 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
       />
 
       {isPending ? (
-        <MasterTableSkeleton columnCount={9} rowCount={6} />
+        <MasterTableSkeleton columnCount={11} rowCount={6} />
       ) : isError ? (
         <p className="text-sm text-destructive">{error.message}</p>
       ) : (

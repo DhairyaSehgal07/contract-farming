@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/requisition/requisitions";
 import { requisitionKeys } from "@/lib/query/keys";
 import {
+  fetchRequisition,
   fetchRequisitionFarmers,
   fetchRequisitions,
   fetchRequisitionVarieties,
@@ -25,6 +26,14 @@ export function useRequisitions() {
   return useQuery({
     queryKey: requisitionKeys.list(),
     queryFn: fetchRequisitions,
+  });
+}
+
+export function useRequisition(id: string | null) {
+  return useQuery({
+    queryKey: requisitionKeys.detail(id ?? ""),
+    queryFn: () => fetchRequisition(id!),
+    enabled: Boolean(id),
   });
 }
 
@@ -74,8 +83,11 @@ export function useUpdateRequisition() {
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: requisitionKeys.detail(data.id),
+      });
       toast.success("Requisition updated");
     },
     onError: (error: Error) => {
@@ -93,9 +105,13 @@ export function useDeleteRequisition() {
       if (!result.success) {
         throw new Error(result.error);
       }
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: requisitionKeys.detail(id),
+      });
       toast.success("Requisition deleted");
     },
     onError: (error: Error) => {
@@ -115,8 +131,11 @@ export function useApproveRequisition() {
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: requisitionKeys.detail(data.id),
+      });
       toast.success("Requisition approved");
     },
     onError: (error: Error) => {
@@ -136,8 +155,11 @@ export function useRejectRequisition() {
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: requisitionKeys.detail(data.id),
+      });
       toast.success("Requisition rejected");
     },
     onError: (error: Error) => {

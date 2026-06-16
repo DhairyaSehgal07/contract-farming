@@ -50,9 +50,10 @@ const emptyValues: DispatchDetailsFormValues = {
   dispatchDate: "",
   generationId: "",
   locationId: "",
-  toLocationId: "",
+  toLocation: "",
   truckNumber: "",
   manualGatePassNumber: "",
+  weightSlipNumber: "",
   driverMobileNumber: "",
   grossWeight: "",
   tareWeight: "",
@@ -77,6 +78,10 @@ function parseWeightValue(value: string): number {
   if (value === "") return 0;
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatWeightValue(value: number) {
+  return value.toFixed(2).replace(/\.?0+$/, "");
 }
 
 export function DispatchDetailsStep({
@@ -117,6 +122,10 @@ export function DispatchDetailsStep({
       })),
     [selections, requisitionById],
   );
+  const totalBags = useMemo(
+    () => summaryRows.reduce((sum, row) => sum + row.total, 0),
+    [summaryRows],
+  );
 
   const generationOptions = useMemo<ComboboxOption[]>(
     () =>
@@ -131,7 +140,7 @@ export function DispatchDetailsStep({
     () =>
       locations.map((location) => ({
         id: location.id,
-        label: `${location.name} (${location.category})`,
+        label: location.name,
       })),
     [locations],
   );
@@ -146,8 +155,21 @@ export function DispatchDetailsStep({
     },
     onSubmit: async ({ value }) => {
       const requisitionInput = selectionsToInput(selections);
+      const hasGrossWeight = value.grossWeight.trim().length > 0;
+      const hasTareWeight = value.tareWeight.trim().length > 0;
+      const grossWeight = parseWeightValue(value.grossWeight);
+      const tareWeight = parseWeightValue(value.tareWeight);
+      const netWeight = grossWeight - tareWeight;
+      const hasCalculatedNet =
+        hasGrossWeight && hasTareWeight && netWeight >= 0;
+      const hasCalculatedAverage = hasCalculatedNet && totalBags > 0;
       onSubmit({
         ...value,
+        truckNumber: value.truckNumber.toUpperCase(),
+        netWeight: hasCalculatedNet ? formatWeightValue(netWeight) : "",
+        averageWeightPerBag: hasCalculatedAverage
+          ? formatWeightValue(netWeight / totalBags)
+          : "",
         dateOfReceiving: "",
         requisitions: requisitionInput,
       });
@@ -282,7 +304,7 @@ export function DispatchDetailsStep({
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(event.target.value)
+                            field.handleChange(event.target.value.toUpperCase())
                           }
                           aria-invalid={isInvalid}
                           placeholder="e.g. PB08 AB 1234"
@@ -428,7 +450,7 @@ export function DispatchDetailsStep({
                   }}
                 </form.Field>
 
-                <form.Field name="toLocationId">
+                <form.Field name="toLocation">
                   {(field) => {
                     const isInvalid = isFieldInvalid(field.state.meta);
                     return (
@@ -439,17 +461,17 @@ export function DispatchDetailsStep({
                         <FieldLabel htmlFor="dispatch-to-location">
                           To location (optional)
                         </FieldLabel>
-                        <SearchableComboboxField
+                        <Input
                           id="dispatch-to-location"
                           name={field.name}
-                          value={field.state.value ?? ""}
-                          onValueChange={field.handleChange}
+                          value={field.state.value}
                           onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder="Search locations…"
-                          emptyMessage="No locations found."
-                          options={locationOptions}
-                          portalContainer={portalContainerRef}
+                          onChange={(event) =>
+                            field.handleChange(event.target.value)
+                          }
+                          aria-invalid={isInvalid}
+                          placeholder="Enter destination location"
+                          autoComplete="off"
                         />
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />
@@ -477,14 +499,50 @@ export function DispatchDetailsStep({
                 })}
               >
                 {({ grossWeight, tareWeight }) => {
+                  const hasGrossWeight = grossWeight.trim().length > 0;
+                  const hasTareWeight = tareWeight.trim().length > 0;
                   const gross = parseWeightValue(grossWeight);
                   const tare = parseWeightValue(tareWeight);
                   const net = gross - tare;
-                  const showNet = gross > 0 && tare >= 0 && net >= 0;
+                  const hasCalculatedNet =
+                    hasGrossWeight && hasTareWeight && net >= 0;
+                  const hasCalculatedAverage = hasCalculatedNet && totalBags > 0;
+                  const averageWeightPerBag = hasCalculatedAverage
+                    ? net / totalBags
+                    : 0;
 
                   return (
                     <>
-                      <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2 @lg/field-group:grid-cols-4">
+                      <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
+                        <form.Field name="weightSlipNumber">
+                          {(field) => {
+                            const isInvalid = isFieldInvalid(field.state.meta);
+                            return (
+                              <Field data-invalid={isInvalid}>
+                                <FieldLabel htmlFor="dispatch-weight-slip-number">
+                                  Weight slip number (optional)
+                                </FieldLabel>
+                                <Input
+                                  id="dispatch-weight-slip-number"
+                                  name={field.name}
+                                  inputMode="numeric"
+                                  value={field.state.value}
+                                  onBlur={field.handleBlur}
+                                  onChange={(event) =>
+                                    field.handleChange(event.target.value)
+                                  }
+                                  aria-invalid={isInvalid}
+                                  placeholder="e.g. 1024"
+                                  autoComplete="off"
+                                />
+                                {isInvalid ? (
+                                  <FieldError errors={field.state.meta.errors} />
+                                ) : null}
+                              </Field>
+                            );
+                          }}
+                        </form.Field>
+
                         <form.Field name="grossWeight">
                           {(field) => {
                             const isInvalid = isFieldInvalid(field.state.meta);
@@ -540,72 +598,28 @@ export function DispatchDetailsStep({
                             );
                           }}
                         </form.Field>
-
-                        <form.Field name="netWeight">
-                          {(field) => {
-                            const isInvalid = isFieldInvalid(field.state.meta);
-                            return (
-                              <Field data-invalid={isInvalid}>
-                                <FieldLabel htmlFor="dispatch-net-weight">
-                                  Net weight (optional)
-                                </FieldLabel>
-                                <Input
-                                  id="dispatch-net-weight"
-                                  name={field.name}
-                                  inputMode="decimal"
-                                  value={field.state.value}
-                                  onBlur={field.handleBlur}
-                                  onChange={(event) =>
-                                    field.handleChange(event.target.value)
-                                  }
-                                  aria-invalid={isInvalid}
-                                  placeholder="Net weight"
-                                />
-                                {isInvalid ? (
-                                  <FieldError errors={field.state.meta.errors} />
-                                ) : null}
-                              </Field>
-                            );
-                          }}
-                        </form.Field>
-
-                        <form.Field name="averageWeightPerBag">
-                          {(field) => {
-                            const isInvalid = isFieldInvalid(field.state.meta);
-                            return (
-                              <Field data-invalid={isInvalid}>
-                                <FieldLabel htmlFor="dispatch-avg-weight">
-                                  Avg. weight per bag (optional)
-                                </FieldLabel>
-                                <Input
-                                  id="dispatch-avg-weight"
-                                  name={field.name}
-                                  inputMode="decimal"
-                                  value={field.state.value}
-                                  onBlur={field.handleBlur}
-                                  onChange={(event) =>
-                                    field.handleChange(event.target.value)
-                                  }
-                                  aria-invalid={isInvalid}
-                                  placeholder="Per bag"
-                                />
-                                {isInvalid ? (
-                                  <FieldError errors={field.state.meta.errors} />
-                                ) : null}
-                              </Field>
-                            );
-                          }}
-                        </form.Field>
                       </FieldGroup>
 
-                      {showNet ? (
-                        <div className="mt-6 flex items-center justify-between rounded-md border bg-muted/50 px-4 py-3">
-                          <span className="text-sm font-medium text-muted-foreground">
-                            Calculated net weight
-                          </span>
-                          <span className="text-lg font-semibold tracking-tight text-foreground tabular-nums">
-                            {net.toLocaleString("en-IN")} kg
-                          </span>
+                      {hasCalculatedNet ? (
+                        <div className="mt-6 grid grid-cols-1 gap-3 @md/field-group:grid-cols-2">
+                          <div className="flex items-center justify-between rounded-md border bg-muted/50 px-4 py-3">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Calculated net weight
+                            </span>
+                            <span className="text-lg font-semibold tracking-tight text-foreground tabular-nums">
+                              {net.toLocaleString("en-IN")} kg
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-md border bg-muted/50 px-4 py-3">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Calculated avg. weight per bag
+                            </span>
+                            <span className="text-lg font-semibold tracking-tight text-foreground tabular-nums">
+                              {hasCalculatedAverage
+                                ? `${averageWeightPerBag.toLocaleString("en-IN")} kg`
+                                : "—"}
+                            </span>
+                          </div>
                         </div>
                       ) : null}
                     </>

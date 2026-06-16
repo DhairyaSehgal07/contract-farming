@@ -34,11 +34,40 @@ const requisitionInclude = {
   reviewedBy: { select: { name: true } },
 } as const;
 
+const requisitionDetailInclude = {
+  ...requisitionInclude,
+  dispatchAssignments: {
+    include: {
+      dispatch: {
+        include: {
+          generation: { select: { name: true } },
+          location: { select: { name: true } },
+        },
+      },
+      sizeLines: {
+        include: { size: { select: { name: true } } },
+      },
+    },
+    orderBy: { dispatch: { dispatchDate: "desc" } },
+  },
+} as const;
+
 type RequisitionWithRelations = Awaited<
   ReturnType<
     typeof prisma.requisition.findMany<{ include: typeof requisitionInclude }>
   >
 >[number];
+
+type RequisitionDetailWithRelations = NonNullable<
+  Awaited<
+    ReturnType<
+      typeof prisma.requisition.findUnique<{
+        where: { id: string };
+        include: typeof requisitionDetailInclude;
+      }>
+    >
+  >
+>;
 
 export type RequisitionRow = {
   id: string;
@@ -53,6 +82,8 @@ export type RequisitionRow = {
   createdById: string;
   reviewedById: string | null;
   reviewedAt: string | null;
+  approvalDate: string | null;
+  rejectionDate: string | null;
   createdAt: string;
   updatedAt: string;
   farmer: { name: string; accountNumber: string };
@@ -72,6 +103,39 @@ export type RequisitionVarietyOption = {
   name: string;
 };
 
+export type RequisitionDispatchAssignment = {
+  id: string;
+  dispatch: {
+    id: string;
+    dispatchDate: string | null;
+    dateOfReceiving: string | null;
+    truckNumber: string | null;
+    manualGatePassNumber: string | null;
+    weightSlipNumber: string | null;
+    grossWeight: string | null;
+    tareWeight: string | null;
+    netWeight: string | null;
+    averageWeightPerBag: string | null;
+    driverMobileNumber: string | null;
+    remarks: string | null;
+    toLocation: string | null;
+    generation: { name: string } | null;
+    location: { name: string } | null;
+  };
+  sizeLines: Array<{
+    id: string;
+    quantity: string;
+    size: { name: string };
+  }>;
+};
+
+export type RequisitionDetail = RequisitionRow & {
+  approvedDeliveryDate: string | null;
+  fulfilledQuantity: string;
+  remainingQuantity: string;
+  dispatchAssignments: RequisitionDispatchAssignment[];
+};
+
 function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
   return {
     id: row.id,
@@ -86,12 +150,66 @@ function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
     createdById: row.createdById,
     reviewedById: row.reviewedById,
     reviewedAt: row.reviewedAt?.toISOString() ?? null,
+    approvalDate: row.approvalDate?.toISOString().slice(0, 10) ?? null,
+    rejectionDate: row.rejectionDate?.toISOString().slice(0, 10) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     farmer: row.farmer,
     variety: row.variety,
     createdBy: row.createdBy,
     reviewedBy: row.reviewedBy,
+  };
+}
+
+function serializeDispatchAssignment(
+  assignment: RequisitionDetailWithRelations["dispatchAssignments"][number],
+): RequisitionDispatchAssignment {
+  const { dispatch, sizeLines } = assignment;
+
+  return {
+    id: assignment.id,
+    dispatch: {
+      id: dispatch.id,
+      dispatchDate: dispatch.dispatchDate?.toISOString().slice(0, 10) ?? null,
+      dateOfReceiving:
+        dispatch.dateOfReceiving?.toISOString().slice(0, 10) ?? null,
+      truckNumber: dispatch.truckNumber,
+      manualGatePassNumber: dispatch.manualGatePassNumber,
+      weightSlipNumber: dispatch.weightSlipNumber,
+      grossWeight: dispatch.grossWeight?.toString() ?? null,
+      tareWeight: dispatch.tareWeight?.toString() ?? null,
+      netWeight: dispatch.netWeight?.toString() ?? null,
+      averageWeightPerBag: dispatch.averageWeightPerBag?.toString() ?? null,
+      driverMobileNumber: dispatch.driverMobileNumber,
+      remarks: dispatch.remarks,
+      toLocation: dispatch.toLocation,
+      generation: dispatch.generation,
+      location: dispatch.location,
+    },
+    sizeLines: sizeLines.map((line) => ({
+      id: line.id,
+      quantity: line.quantity.toString(),
+      size: line.size,
+    })),
+  };
+}
+
+function serializeRequisitionDetail(
+  row: RequisitionDetailWithRelations,
+): RequisitionDetail {
+  const initial = row.initialQuantity
+    ? Number.parseFloat(row.initialQuantity.toString())
+    : 0;
+  const fulfilled = Number.parseFloat(row.fulfilledQuantity.toString());
+  const remaining = Math.max(0, initial - fulfilled);
+
+  return {
+    ...serializeRequisition(row),
+    approvedDeliveryDate:
+      row.approvedDeliveryDate?.toISOString().slice(0, 10) ?? null,
+    fulfilledQuantity: row.fulfilledQuantity.toString(),
+    remainingQuantity: remaining.toString(),
+    dispatchAssignments: row.dispatchAssignments.map(serializeDispatchAssignment),
   };
 }
 
@@ -142,6 +260,33 @@ async function getApprovableRequisition(
   }
 
   return actionSuccess({ id: requisition.id });
+}
+
+export async function getRequisition(
+  id: string,
+): Promise<ActionResult<RequisitionDetail>> {
+  const authError = await requireRequisitionReadAction();
+  if (authError) return authError;
+
+  if (!id) {
+    return actionError("ID is required.");
+  }
+
+  try {
+    const row = await prisma.requisition.findUnique({
+      where: { id },
+      include: requisitionDetailInclude,
+    });
+
+    if (!row) {
+      return actionError("Requisition not found.");
+    }
+
+    return actionSuccess(serializeRequisitionDetail(row));
+  } catch (error) {
+    console.error("getRequisition failed:", error);
+    return actionError(getPrismaErrorMessage(error, "requisition"));
+  }
 }
 
 export async function listRequisitions(): Promise<
@@ -327,12 +472,19 @@ export async function approveRequisition(
   }
 
   try {
+    const today = new Date();
+    const approvalDate = new Date(
+      `${today.toISOString().slice(0, 10)}T00:00:00.000Z`,
+    );
+
     const requisition = await prisma.requisition.update({
       where: { id },
       data: {
         status: RequisitionStatus.APPROVED,
         reviewedById: session.user.id,
         reviewedAt: new Date(),
+        approvalDate,
+        rejectionDate: null,
         rejectionRemarks: null,
       },
       include: requisitionInclude,
@@ -371,12 +523,19 @@ export async function rejectRequisition(
   }
 
   try {
+    const today = new Date();
+    const rejectionDate = new Date(
+      `${today.toISOString().slice(0, 10)}T00:00:00.000Z`,
+    );
+
     const requisition = await prisma.requisition.update({
       where: { id },
       data: {
         status: RequisitionStatus.REJECTED,
         reviewedById: session.user.id,
         reviewedAt: new Date(),
+        approvalDate: null,
+        rejectionDate,
         rejectionRemarks,
       },
       include: requisitionInclude,

@@ -58,6 +58,8 @@ const updatedRequisition = {
   createdById: "creator-1",
   reviewedById: "reviewer-1",
   reviewedAt: new Date("2026-06-10"),
+  approvalDate: new Date("2026-06-10"),
+  rejectionDate: null,
   createdAt: new Date("2026-06-01"),
   updatedAt: new Date("2026-06-10"),
   ...requisitionInclude,
@@ -101,6 +103,7 @@ describe("approveRequisition", () => {
           status: RequisitionStatus.APPROVED,
           reviewedById: "reviewer-1",
           rejectionRemarks: null,
+          rejectionDate: null,
         }),
       }),
     );
@@ -202,6 +205,8 @@ describe("rejectRequisition", () => {
     update.mockResolvedValue({
       ...updatedRequisition,
       status: RequisitionStatus.REJECTED,
+      approvalDate: null,
+      rejectionDate: new Date("2026-06-10"),
       rejectionRemarks: "Insufficient acreage details",
     } as never);
 

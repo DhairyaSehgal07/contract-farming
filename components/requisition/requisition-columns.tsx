@@ -2,9 +2,10 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import type { RequisitionRow } from "@/app/actions/requisition/requisitions";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Badge } from "@/components/ui/badge";
+import { RequisitionStatusBadge } from "@/components/requisition/requisition-status-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,38 +40,6 @@ function formatDate(value: string) {
 
 function formatDecimal(value: string | null) {
   return value ?? "—";
-}
-
-function statusVariant(
-  status: RequisitionRow["status"],
-): "default" | "destructive" | "outline" {
-  switch (status) {
-    case "APPROVED":
-      return "default";
-    case "REJECTED":
-      return "destructive";
-    default:
-      return "outline";
-  }
-}
-
-function statusLabel(status: RequisitionRow["status"]) {
-  switch (status) {
-    case "APPROVED":
-      return "Approved";
-    case "REJECTED":
-      return "Rejected";
-    default:
-      return "Pending";
-  }
-}
-
-function RequisitionStatusBadge({
-  status,
-}: {
-  status: RequisitionRow["status"];
-}) {
-  return <Badge variant={statusVariant(status)}>{statusLabel(status)}</Badge>;
 }
 
 export function createRequisitionColumns(
@@ -121,6 +90,26 @@ export function createRequisitionColumns(
       ),
     },
     {
+      accessorKey: "approvalDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Approval date" />
+      ),
+      cell: ({ row }) =>
+        row.original.approvalDate
+          ? formatDate(row.original.approvalDate)
+          : "—",
+    },
+    {
+      accessorKey: "rejectionDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Rejection date" />
+      ),
+      cell: ({ row }) =>
+        row.original.rejectionDate
+          ? formatDate(row.original.rejectionDate)
+          : "—",
+    },
+    {
       id: "createdBy",
       accessorFn: (row) => row.createdBy.name,
       header: "Created by",
@@ -149,6 +138,10 @@ export function createRequisitionColumns(
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href={`/requisition/${row.original.id}`}>View</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {showApprovalActions ? (
                 <>
                   <DropdownMenuItem

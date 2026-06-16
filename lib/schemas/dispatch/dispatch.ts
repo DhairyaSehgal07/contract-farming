@@ -43,6 +43,12 @@ const optionalId = z
   .or(z.literal(""));
 
 const optionalString = z.string().trim().optional().or(z.literal(""));
+const optionalIntegerString = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .refine((value) => !value || /^\d+$/.test(value), "Enter a valid number");
 
 export const dispatchSizeLineSchema = z.object({
   sizeId: z.string().min(1, "Size is required"),
@@ -64,9 +70,14 @@ export const createDispatchSchema = z.object({
   dateOfReceiving: optionalDate,
   generationId: z.string().min(1, "Generation is required"),
   locationId: optionalId,
-  toLocationId: optionalId,
-  truckNumber: z.string().trim().min(1, "Truck number is required"),
+  toLocation: optionalString,
+  truckNumber: z
+    .string()
+    .trim()
+    .min(1, "Truck number is required")
+    .transform((value) => value.toUpperCase()),
   manualGatePassNumber: optionalString,
+  weightSlipNumber: optionalIntegerString,
   driverMobileNumber: optionalString,
   grossWeight: optionalDecimal,
   tareWeight: optionalDecimal,
@@ -75,11 +86,22 @@ export const createDispatchSchema = z.object({
   remarks: optionalString,
 });
 
+export const dispatchStep2Schema = createDispatchSchema.omit({
+  requisitions: true,
+  dateOfReceiving: true,
+});
+
+export const updateDispatchStep2Schema = dispatchStep2Schema.extend({
+  id: z.string().min(1, "Dispatch is required"),
+});
+
 export type DispatchSizeLineInput = z.infer<typeof dispatchSizeLineSchema>;
 export type DispatchRequisitionSelectionInput = z.infer<
   typeof dispatchRequisitionSelectionSchema
 >;
 export type CreateDispatchInput = z.infer<typeof createDispatchSchema>;
+export type DispatchStep2Input = z.infer<typeof dispatchStep2Schema>;
+export type UpdateDispatchStep2Input = z.infer<typeof updateDispatchStep2Schema>;
 
 function emptyToUndefined(value: string | undefined) {
   return value?.trim() ? value.trim() : undefined;
@@ -93,10 +115,12 @@ function decimalToNumber(value: string | undefined) {
 export function normalizeCreateDispatchInput(input: CreateDispatchInput) {
   return {
     ...input,
+    truckNumber: input.truckNumber.trim().toUpperCase(),
     dateOfReceiving: emptyToUndefined(input.dateOfReceiving),
     locationId: emptyToUndefined(input.locationId),
-    toLocationId: emptyToUndefined(input.toLocationId),
+    toLocation: emptyToUndefined(input.toLocation),
     manualGatePassNumber: emptyToUndefined(input.manualGatePassNumber),
+    weightSlipNumber: emptyToUndefined(input.weightSlipNumber),
     driverMobileNumber: emptyToUndefined(input.driverMobileNumber),
     grossWeight: decimalToNumber(input.grossWeight),
     tareWeight: decimalToNumber(input.tareWeight),
@@ -111,6 +135,28 @@ export function normalizeCreateDispatchInput(input: CreateDispatchInput) {
       })),
     })),
   };
+}
+
+export function normalizeDispatchStep2Input(input: DispatchStep2Input) {
+  return {
+    ...input,
+    truckNumber: input.truckNumber.trim().toUpperCase(),
+    locationId: emptyToUndefined(input.locationId),
+    toLocation: emptyToUndefined(input.toLocation),
+    manualGatePassNumber: emptyToUndefined(input.manualGatePassNumber),
+    weightSlipNumber: emptyToUndefined(input.weightSlipNumber),
+    driverMobileNumber: emptyToUndefined(input.driverMobileNumber),
+    grossWeight: decimalToNumber(input.grossWeight),
+    tareWeight: decimalToNumber(input.tareWeight),
+    netWeight: decimalToNumber(input.netWeight),
+    averageWeightPerBag: decimalToNumber(input.averageWeightPerBag),
+    remarks: emptyToUndefined(input.remarks),
+  };
+}
+
+export function normalizeUpdateDispatchStep2Input(input: UpdateDispatchStep2Input) {
+  const { id, ...rest } = input;
+  return { id, ...normalizeDispatchStep2Input(rest) };
 }
 
 export type NormalizedCreateDispatchInput = ReturnType<
