@@ -2,6 +2,7 @@ import {
   Building2,
   Layers,
   type LucideIcon,
+  MapPin,
   Ruler,
   Sprout,
   Users,
@@ -36,6 +37,13 @@ export const masterNavItems: MasterNavItem[] = [
     href: "/master/varieties",
     icon: Sprout,
     description: "Manage crop variety reference data",
+  },
+  {
+    label: "Locations",
+    value: "locations",
+    href: "/master/locations",
+    icon: MapPin,
+    description: "Manage location reference data",
   },
   {
     label: "Sizes",

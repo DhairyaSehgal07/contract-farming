@@ -104,6 +104,8 @@ model Verification {
 model Station {
   id         String     @id @default(cuid())
   name       String
+  city       String?
+  state      String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
@@ -115,13 +117,10 @@ model Station {
 }
 
 model Locality {
-  id         String   @id @default(cuid())
-  name       String
-  city       String?
-  state      String?
-  postalCode String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   stationId String
   station   Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
@@ -175,12 +174,28 @@ model Variety {
   @@map("variety")
 }
 
+model Location {
+  id       String @id @default(cuid())
+  name     String @unique
+  category String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dispatchesFrom Dispatch[] @relation("DispatchFromLocation")
+  dispatchesTo   Dispatch[] @relation("DispatchToLocation")
+
+  @@map("location")
+}
+
 model Size {
   id        String   @id @default(cuid())
   name      String   @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  dispatchSizeLines DispatchRequisitionSizeLine[]
 
   @@map("size")
 }
@@ -191,6 +206,8 @@ model Generation {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  dispatches Dispatch[]
 
   @@map("generation")
 }
@@ -207,13 +224,15 @@ model RolePermission {
 }
 
 model Requisition {
-  id                  String            @id @default(cuid())
-  requisitionDate     DateTime          @db.Date
-  expectedDeliveryDate DateTime         @db.Date
-  acres               Decimal?          @db.Decimal(10, 2)
-  quantity            Decimal?          @db.Decimal(12, 2)
-  status              RequisitionStatus @default(PENDING)
-  rejectionRemarks    String?
+  id                   String            @id @default(cuid())
+  requisitionDate      DateTime          @db.Date
+  expectedDeliveryDate DateTime          @db.Date
+  approvedDeliveryDate DateTime?         @db.Date
+  acres                Decimal?          @db.Decimal(10, 2)
+  initialQuantity      Decimal?          @db.Decimal(12, 2)
+  fulfilledQuantity    Decimal           @default(0) @db.Decimal(12, 2)
+  status               RequisitionStatus @default(PENDING)
+  rejectionRemarks     String?
 
   farmerId  String
   farmer    Farmer  @relation(fields: [farmerId], references: [id], onDelete: Restrict)
@@ -227,6 +246,8 @@ model Requisition {
   reviewedBy   User?     @relation("RequisitionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt   DateTime?
 
+  dispatchAssignments DispatchRequisition[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -238,4 +259,64 @@ model Requisition {
   @@index([requisitionDate])
   @@index([expectedDeliveryDate])
   @@map("requisition")
+}
+
+model Dispatch {
+  id                   String    @id @default(cuid())
+  dispatchDate         DateTime? @db.Date
+  dateOfReceiving      DateTime? @db.Date
+  truckNumber          String?
+  manualGatePassNumber String?
+  grossWeight          Decimal?  @db.Decimal(12, 2)
+  tareWeight           Decimal?  @db.Decimal(12, 2)
+  netWeight            Decimal?  @db.Decimal(12, 2)
+  averageWeightPerBag  Decimal?  @db.Decimal(12, 2)
+  driverMobileNumber   String?
+  remarks              String?
+
+  generationId String?
+  generation   Generation? @relation(fields: [generationId], references: [id], onDelete: Restrict)
+  locationId   String?
+  location     Location?   @relation("DispatchFromLocation", fields: [locationId], references: [id], onDelete: Restrict)
+  toLocationId String?
+  toLocation   Location?   @relation("DispatchToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+
+  requisitions DispatchRequisition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dispatchDate])
+  @@index([generationId])
+  @@index([locationId])
+  @@index([toLocationId])
+  @@map("dispatch")
+}
+
+model DispatchRequisition {
+  id            String @id @default(cuid())
+  dispatchId    String
+  dispatch      Dispatch    @relation(fields: [dispatchId], references: [id], onDelete: Cascade)
+  requisitionId String
+  requisition   Requisition @relation(fields: [requisitionId], references: [id], onDelete: Restrict)
+
+  sizeLines DispatchRequisitionSizeLine[]
+
+  @@unique([dispatchId, requisitionId])
+  @@index([dispatchId])
+  @@index([requisitionId])
+  @@map("dispatch_requisition")
+}
+
+model DispatchRequisitionSizeLine {
+  id                    String @id @default(cuid())
+  dispatchRequisitionId String
+  dispatchRequisition   DispatchRequisition @relation(fields: [dispatchRequisitionId], references: [id], onDelete: Cascade)
+  sizeId                String
+  size                  Size                @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  quantity              Decimal             @db.Decimal(12, 2)
+
+  @@unique([dispatchRequisitionId, sizeId])
+  @@index([sizeId])
+  @@map("dispatch_requisition_size_line")
 }

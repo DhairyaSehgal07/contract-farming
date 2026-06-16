@@ -138,14 +138,14 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
   return (
     <div className="flex flex-col gap-6">
       <MasterSectionHeader
-        title="Requisitions"
+        title="Requisition"
         description="Manage seed requisitions for farmers."
         actionLabel="Add Requisition"
         onAction={handleCreateOpen}
       />
 
       {isPending ? (
-        <MasterTableSkeleton columnCount={8} rowCount={6} />
+        <MasterTableSkeleton columnCount={9} rowCount={6} />
       ) : isError ? (
         <p className="text-sm text-destructive">{error.message}</p>
       ) : (

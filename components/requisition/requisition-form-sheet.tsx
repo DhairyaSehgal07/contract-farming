@@ -63,7 +63,7 @@ function toFormValues(
     requisitionDate: requisition.requisitionDate,
     expectedDeliveryDate: requisition.expectedDeliveryDate,
     acres: requisition.acres ?? "",
-    quantity: requisition.quantity ?? "",
+    quantity: requisition.initialQuantity ?? "",
   };
 }
 
@@ -229,33 +229,6 @@ export function RequisitionFormSheet({
                   }}
                 </form.Field>
 
-                <form.Field name="expectedDeliveryDate">
-                  {(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched && !field.state.meta.isValid;
-                    const selectedDate = field.state.value
-                      ? parseDateOnly(field.state.value)
-                      : undefined;
-
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <DatePickerInput
-                          id="requisition-expected-delivery-date"
-                          label="Expected delivery date"
-                          placeholder="Pick a date"
-                          value={selectedDate}
-                          aria-invalid={isInvalid}
-                          onDateChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                        />
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
-                    );
-                  }}
-                </form.Field>
-
                 <form.Field name="acres">
                   {(field) => {
                     const isInvalid =
@@ -290,7 +263,7 @@ export function RequisitionFormSheet({
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor="requisition-quantity">
-                          Quantity (optional)
+                          Initial quantity (optional)
                         </FieldLabel>
                         <Input
                           id="requisition-quantity"
@@ -301,6 +274,33 @@ export function RequisitionFormSheet({
                             field.handleChange(event.target.value)
                           }
                           aria-invalid={isInvalid}
+                        />
+                        {isInvalid ? (
+                          <FieldError errors={field.state.meta.errors} />
+                        ) : null}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="expectedDeliveryDate">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+                    const selectedDate = field.state.value
+                      ? parseDateOnly(field.state.value)
+                      : undefined;
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <DatePickerInput
+                          id="requisition-expected-delivery-date"
+                          label="Expected delivery date"
+                          placeholder="Pick a date"
+                          value={selectedDate}
+                          aria-invalid={isInvalid}
+                          onDateChange={field.handleChange}
+                          onBlur={field.handleBlur}
                         />
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />

@@ -1,9 +1,9 @@
-import { RequisitionStatus, Role } from "@/app/generated/prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   approveRequisition,
   rejectRequisition,
 } from "@/app/actions/requisition/requisitions";
+import { RequisitionStatus, Role } from "@/app/generated/prisma/client";
 import { getServerSession } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 
@@ -50,7 +50,7 @@ const updatedRequisition = {
   requisitionDate: new Date("2026-06-01"),
   expectedDeliveryDate: new Date("2026-06-15"),
   acres: null,
-  quantity: null,
+  initialQuantity: null,
   status: RequisitionStatus.APPROVED,
   rejectionRemarks: null,
   farmerId: "farmer-1",

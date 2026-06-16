@@ -23,16 +23,10 @@ import { localityNameSchema } from "@/lib/schemas/master/locality";
 
 const formSchema = z.object({
   name: localityNameSchema,
-  city: z.string(),
-  state: z.string(),
-  postalCode: z.string(),
 });
 
 type LocalityFormValues = {
   name: string;
-  city: string;
-  state: string;
-  postalCode: string;
 };
 
 type LocalityFormDialogProps = {
@@ -46,9 +40,6 @@ type LocalityFormDialogProps = {
 
 const emptyValues: LocalityFormValues = {
   name: "",
-  city: "",
-  state: "",
-  postalCode: "",
 };
 
 export function LocalityFormDialog({
@@ -70,9 +61,6 @@ export function LocalityFormDialog({
   useEffect(() => {
     if (open) {
       form.setFieldValue("name", initialValues.name);
-      form.setFieldValue("city", initialValues.city);
-      form.setFieldValue("state", initialValues.state);
-      form.setFieldValue("postalCode", initialValues.postalCode);
     }
   }, [open, initialValues, form]);
 
@@ -123,54 +111,6 @@ export function LocalityFormDialog({
                   </Field>
                 );
               }}
-            </form.Field>
-
-            <form.Field name="city">
-              {(field) => (
-                <Field>
-                  <FieldLabel htmlFor="locality-city">City</FieldLabel>
-                  <Input
-                    id="locality-city"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="City"
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="state">
-              {(field) => (
-                <Field>
-                  <FieldLabel htmlFor="locality-state">State</FieldLabel>
-                  <Input
-                    id="locality-state"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="State"
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="postalCode">
-              {(field) => (
-                <Field>
-                  <FieldLabel htmlFor="locality-postal">Postal code</FieldLabel>
-                  <Input
-                    id="locality-postal"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="Postal code"
-                  />
-                </Field>
-              )}
             </form.Field>
           </FieldGroup>
 

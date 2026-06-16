@@ -13,7 +13,6 @@ import {
 import {
   type CreateLocalityInput,
   createLocalitySchema,
-  normalizeLocalityInput,
   type UpdateLocalityInput,
   updateLocalitySchema,
 } from "@/lib/schemas/master/locality";
@@ -22,9 +21,6 @@ import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 export type LocalityRow = {
   id: string;
   name: string;
-  city: string | null;
-  state: string | null;
-  postalCode: string | null;
   stationId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -71,7 +67,7 @@ export async function createLocality(
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const data = normalizeLocalityInput(parsed.data);
+  const data = parsed.data;
 
   try {
     const station = await prisma.station.findUnique({
@@ -106,16 +102,13 @@ export async function updateLocality(
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const data = normalizeLocalityInput(parsed.data);
+  const data = parsed.data;
 
   try {
     const locality = await prisma.locality.update({
       where: { id: data.id },
       data: {
         name: data.name,
-        city: data.city,
-        state: data.state,
-        postalCode: data.postalCode,
         stationId: data.stationId,
       },
       include: {

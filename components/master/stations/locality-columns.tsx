@@ -30,21 +30,6 @@ export function createLocalityColumns(
       ),
     },
     {
-      accessorKey: "city",
-      header: "City",
-      cell: ({ row }) => row.original.city ?? "—",
-    },
-    {
-      accessorKey: "state",
-      header: "State",
-      cell: ({ row }) => row.original.state ?? "—",
-    },
-    {
-      accessorKey: "postalCode",
-      header: "Postal code",
-      cell: ({ row }) => row.original.postalCode ?? "—",
-    },
-    {
       id: "actions",
       cell: ({ row }) => (
         <DropdownMenu>

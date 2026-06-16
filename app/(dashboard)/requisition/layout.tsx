@@ -21,5 +21,5 @@ export default async function RequisitionLayout({
     redirect("/");
   }
 
-  return children;
+  return <div className="min-w-0">{children}</div>;
 }

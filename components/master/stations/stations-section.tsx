@@ -119,7 +119,11 @@ export function StationsSection() {
     setStationFormOpen(true);
   }
 
-  function handleStationSubmit(values: { name: string }) {
+  function handleStationSubmit(values: {
+    name: string;
+    city: string;
+    state: string;
+  }) {
     if (stationFormMode === "create") {
       createStationMutation.mutate(values, {
         onSuccess: (station) => {
@@ -133,7 +137,7 @@ export function StationsSection() {
     if (!editingStation) return;
 
     updateStationMutation.mutate(
-      { id: editingStation.id, name: values.name },
+      { id: editingStation.id, ...values },
       {
         onSuccess: () => {
           setStationFormOpen(false);
@@ -157,12 +161,7 @@ export function StationsSection() {
     });
   }
 
-  function handleLocalitySubmit(values: {
-    name: string;
-    city: string;
-    state: string;
-    postalCode: string;
-  }) {
+  function handleLocalitySubmit(values: { name: string }) {
     if (!selectedStationId) return;
 
     if (localityFormMode === "create") {
@@ -244,6 +243,13 @@ export function StationsSection() {
                         )}
                       >
                         <span className="block truncate">{station.name}</span>
+                        {[station.city, station.state].some(Boolean) ? (
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {[station.city, station.state]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </span>
+                        ) : null}
                         <span className="text-xs text-muted-foreground">
                           {station._count.localities} localities ·{" "}
                           {station._count.farmers} farmers
@@ -345,7 +351,11 @@ export function StationsSection() {
         open={stationFormOpen}
         onOpenChange={setStationFormOpen}
         mode={stationFormMode}
-        initialName={editingStation?.name ?? ""}
+        initialValues={{
+          name: editingStation?.name ?? "",
+          city: editingStation?.city ?? "",
+          state: editingStation?.state ?? "",
+        }}
         isPending={
           createStationMutation.isPending || updateStationMutation.isPending
         }
@@ -358,9 +368,6 @@ export function StationsSection() {
         mode={localityFormMode}
         initialValues={{
           name: editingLocality?.name ?? "",
-          city: editingLocality?.city ?? "",
-          state: editingLocality?.state ?? "",
-          postalCode: editingLocality?.postalCode ?? "",
         }}
         isPending={
           createLocalityMutation.isPending || updateLocalityMutation.isPending

@@ -14,6 +14,7 @@ import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 import {
   type CreateStationInput,
   createStationSchema,
+  normalizeStationInput,
   type UpdateStationInput,
   updateStationSchema,
 } from "@/lib/schemas/master/station";
@@ -21,6 +22,8 @@ import {
 export type StationRow = {
   id: string;
   name: string;
+  city: string | null;
+  state: string | null;
   createdAt: Date;
   updatedAt: Date;
   _count: {
@@ -60,16 +63,18 @@ export async function createStation(
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const data = normalizeStationInput(parsed.data);
+
   try {
-    const data = await prisma.station.create({
-      data: parsed.data,
+    const station = await prisma.station.create({
+      data,
       include: {
         _count: {
           select: { localities: true, farmers: true },
         },
       },
     });
-    return actionSuccess(data);
+    return actionSuccess(station);
   } catch (error) {
     return actionError(getPrismaErrorMessage(error, "station"));
   }
@@ -86,17 +91,23 @@ export async function updateStation(
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const data = normalizeStationInput(parsed.data);
+
   try {
-    const data = await prisma.station.update({
-      where: { id: parsed.data.id },
-      data: { name: parsed.data.name },
+    const station = await prisma.station.update({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        city: data.city,
+        state: data.state,
+      },
       include: {
         _count: {
           select: { localities: true, farmers: true },
         },
       },
     });
-    return actionSuccess(data);
+    return actionSuccess(station);
   } catch (error) {
     return actionError(getPrismaErrorMessage(error, "station"));
   }

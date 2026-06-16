@@ -24,6 +24,11 @@ type RequisitionColumnActions = {
   onReject: (row: RequisitionRow) => void;
 };
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
 function formatDate(value: string) {
   return parseDateOnly(value).toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -60,10 +65,12 @@ function statusLabel(status: RequisitionRow["status"]) {
   }
 }
 
-function RequisitionStatusBadge({ status }: { status: RequisitionRow["status"] }) {
-  return (
-    <Badge variant={statusVariant(status)}>{statusLabel(status)}</Badge>
-  );
+function RequisitionStatusBadge({
+  status,
+}: {
+  status: RequisitionRow["status"];
+}) {
+  return <Badge variant={statusVariant(status)}>{statusLabel(status)}</Badge>;
 }
 
 export function createRequisitionColumns(
@@ -102,9 +109,9 @@ export function createRequisitionColumns(
       cell: ({ row }) => formatDecimal(row.original.acres),
     },
     {
-      accessorKey: "quantity",
+      accessorKey: "initialQuantity",
       header: "Quantity",
-      cell: ({ row }) => formatDecimal(row.original.quantity),
+      cell: ({ row }) => formatDecimal(row.original.initialQuantity),
     },
     {
       accessorKey: "status",
@@ -117,6 +124,14 @@ export function createRequisitionColumns(
       id: "createdBy",
       accessorFn: (row) => row.createdBy.name,
       header: "Created by",
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Created at" />
+      ),
+      cell: ({ row }) =>
+        dateTimeFormatter.format(new Date(row.original.createdAt)),
     },
     {
       id: "actions",

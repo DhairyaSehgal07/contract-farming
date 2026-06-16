@@ -8,6 +8,8 @@ export const stationNameSchema = z
 
 export const createStationSchema = z.object({
   name: stationNameSchema,
+  city: z.string().trim().max(100).optional().or(z.literal("")),
+  state: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export const updateStationSchema = createStationSchema.extend({
@@ -16,3 +18,20 @@ export const updateStationSchema = createStationSchema.extend({
 
 export type CreateStationInput = z.infer<typeof createStationSchema>;
 export type UpdateStationInput = z.infer<typeof updateStationSchema>;
+
+function emptyToUndefined(value: string | undefined) {
+  return value?.trim() ? value.trim() : undefined;
+}
+
+export function normalizeStationInput<
+  T extends {
+    city?: string;
+    state?: string;
+  },
+>(input: T) {
+  return {
+    ...input,
+    city: emptyToUndefined(input.city),
+    state: emptyToUndefined(input.state),
+  };
+}

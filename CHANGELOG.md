@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.4] - 2026-06-16
+
+### Features
+
+- Add dispatch module with list view, multi-step create flow, and requisition assignment
+- Add locations master data with CRUD and master navigation entry
+- Add dispatch RBAC permissions and nav entry gated by `dispatch:read` / `dispatch:write`
+- Track requisition fulfillment with `initialQuantity`, `fulfilledQuantity`, and `approvedDeliveryDate`
+
+### Enhancements
+
+- Move station city and state fields from localities to stations
+- Simplify locality forms and tables to name and station only
+- Extend requisition columns and form for fulfillment and delivery date fields
+- Add `actionHref` support to master section headers for link-based actions
+- Improve drawer and requisition layout overflow handling
+
+### Database
+
+- Add `Location`, `Dispatch`, `DispatchRequisition`, and `DispatchRequisitionSizeLine` models
+- Add requisition fulfillment tracking and delivery date migrations
+
 ## [0.2.2] - 2026-06-14
 
 ### Features

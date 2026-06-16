@@ -61,7 +61,9 @@ export function RequisitionRejectDialog({
         </DialogHeader>
         <FieldGroup>
           <Field data-invalid={error ? true : undefined}>
-            <FieldLabel htmlFor="rejection-remarks">Rejection remarks</FieldLabel>
+            <FieldLabel htmlFor="rejection-remarks">
+              Rejection remarks
+            </FieldLabel>
             <Textarea
               id="rejection-remarks"
               value={rejectionRemarks}
@@ -72,9 +74,7 @@ export function RequisitionRejectDialog({
               placeholder="Explain why this requisition is being rejected"
               rows={4}
             />
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </Field>
         </FieldGroup>
         <DialogFooter>

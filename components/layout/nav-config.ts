@@ -3,6 +3,7 @@ import {
   Database,
   LayoutDashboard,
   Shield,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 import type { AppAction, AppResource } from "@/lib/auth/permission-catalog";
@@ -34,6 +35,13 @@ export const navItems: NavItem[] = [
     requiredAppPermission: { resource: "requisition", action: "read" },
   },
   {
+    name: "Dispatch",
+    href: "/dispatch",
+    icon: Truck,
+    activePaths: ["/dispatch"],
+    requiredAppPermission: { resource: "dispatch", action: "read" },
+  },
+  {
     name: "Master",
     href: "/master",
     icon: Database,
@@ -54,6 +62,8 @@ export const routeTitles: Record<string, string> = {
   "/master": "Master",
   "/permissions": "Permissions",
   "/requisition": "Requisition",
+  "/dispatch": "Dispatch",
+  "/dispatch/new": "New dispatch",
   "/permissions/roles": "Role permissions",
   "/permissions/users": "Users",
   "/permissions/sessions": "Sessions",

@@ -18,29 +18,46 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createStationSchema } from "@/lib/schemas/master/station";
+import { stationNameSchema } from "@/lib/schemas/master/station";
+import * as z from "zod";
 
-const formSchema = createStationSchema;
+const formSchema = z.object({
+  name: stationNameSchema,
+  city: z.string(),
+  state: z.string(),
+});
+
+type StationFormValues = {
+  name: string;
+  city: string;
+  state: string;
+};
 
 type StationFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
-  initialName?: string;
+  initialValues?: StationFormValues;
   isPending?: boolean;
-  onSubmit: (values: { name: string }) => void;
+  onSubmit: (values: StationFormValues) => void;
+};
+
+const emptyValues: StationFormValues = {
+  name: "",
+  city: "",
+  state: "",
 };
 
 export function StationFormDialog({
   open,
   onOpenChange,
   mode,
-  initialName = "",
+  initialValues = emptyValues,
   isPending = false,
   onSubmit,
 }: StationFormDialogProps) {
   const form = useForm({
-    defaultValues: { name: initialName },
+    defaultValues: initialValues,
     validators: { onSubmit: formSchema },
     onSubmit: async ({ value }) => {
       onSubmit(value);
@@ -49,9 +66,11 @@ export function StationFormDialog({
 
   useEffect(() => {
     if (open) {
-      form.setFieldValue("name", initialName);
+      form.setFieldValue("name", initialValues.name);
+      form.setFieldValue("city", initialValues.city);
+      form.setFieldValue("state", initialValues.state);
     }
-  }, [open, initialName, form]);
+  }, [open, initialValues, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,7 +82,7 @@ export function StationFormDialog({
           <DialogDescription>
             {mode === "create"
               ? "Create a new station."
-              : "Update the station name."}
+              : "Update station details."}
           </DialogDescription>
         </DialogHeader>
 
@@ -101,6 +120,38 @@ export function StationFormDialog({
                   </Field>
                 );
               }}
+            </form.Field>
+
+            <form.Field name="city">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="station-city">City</FieldLabel>
+                  <Input
+                    id="station-city"
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="City"
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="state">
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor="station-state">State</FieldLabel>
+                  <Input
+                    id="station-state"
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="State"
+                  />
+                </Field>
+              )}
             </form.Field>
           </FieldGroup>
 

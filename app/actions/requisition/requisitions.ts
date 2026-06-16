@@ -45,7 +45,7 @@ export type RequisitionRow = {
   requisitionDate: string;
   expectedDeliveryDate: string;
   acres: string | null;
-  quantity: string | null;
+  initialQuantity: string | null;
   status: RequisitionStatus;
   rejectionRemarks: string | null;
   farmerId: string;
@@ -78,7 +78,7 @@ function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
     requisitionDate: row.requisitionDate.toISOString().slice(0, 10),
     expectedDeliveryDate: row.expectedDeliveryDate.toISOString().slice(0, 10),
     acres: row.acres?.toString() ?? null,
-    quantity: row.quantity?.toString() ?? null,
+    initialQuantity: row.initialQuantity?.toString() ?? null,
     status: row.status,
     rejectionRemarks: row.rejectionRemarks,
     farmerId: row.farmerId,
@@ -129,7 +129,9 @@ async function getApprovableRequisition(
   }
 
   if (requisition.status !== RequisitionStatus.PENDING) {
-    return actionError("Only pending requisitions can be approved or rejected.");
+    return actionError(
+      "Only pending requisitions can be approved or rejected.",
+    );
   }
 
   if (
@@ -224,7 +226,8 @@ export async function createRequisition(
           `${data.expectedDeliveryDate}T00:00:00.000Z`,
         ),
         acres: data.acres ?? null,
-        quantity: data.quantity ?? null,
+        initialQuantity: data.quantity ?? null,
+        fulfilledQuantity: 0,
         farmerId: data.farmerId,
         varietyId: data.varietyId,
         createdById: session.user.id,
@@ -265,7 +268,7 @@ export async function updateRequisition(
           `${rest.expectedDeliveryDate}T00:00:00.000Z`,
         ),
         acres: rest.acres ?? null,
-        quantity: rest.quantity ?? null,
+        initialQuantity: rest.quantity ?? null,
         farmerId: rest.farmerId,
         varietyId: rest.varietyId,
       },

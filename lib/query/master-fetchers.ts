@@ -7,6 +7,10 @@ import {
   type LocalityRow,
   listLocalities,
 } from "@/app/actions/master/localities";
+import {
+  type LocationRow,
+  listLocations,
+} from "@/app/actions/master/locations";
 import { listSizes, type SizeRow } from "@/app/actions/master/sizes";
 import { listStations, type StationRow } from "@/app/actions/master/stations";
 import { listVarieties, type VarietyRow } from "@/app/actions/master/varieties";
@@ -25,6 +29,10 @@ async function unwrap<T>(
 
 export async function fetchVarieties(): Promise<VarietyRow[]> {
   return unwrap(listVarieties());
+}
+
+export async function fetchLocations(): Promise<LocationRow[]> {
+  return unwrap(listLocations());
 }
 
 export async function fetchSizes(): Promise<SizeRow[]> {

@@ -24,7 +24,10 @@ function isClientReady(client: PrismaClient) {
     typeof client.station?.findMany === "function" &&
     typeof client.variety?.findMany === "function" &&
     typeof client.farmer?.findMany === "function" &&
-    typeof client.rolePermission?.findMany === "function"
+    typeof client.rolePermission?.findMany === "function" &&
+    typeof client.location?.findMany === "function" &&
+    typeof client.dispatch?.findMany === "function" &&
+    typeof client.dispatchRequisition?.findMany === "function"
   );
 }
 
