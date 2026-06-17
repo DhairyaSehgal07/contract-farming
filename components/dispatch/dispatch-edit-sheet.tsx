@@ -152,343 +152,366 @@ export function DispatchEditSheet({
         >
           <div className="flex-1 overflow-y-auto px-6">
             <FieldGroup className="gap-5">
-            <form.Field name="dispatchDate">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                const selectedDate = field.state.value
-                  ? parseDateOnly(field.state.value)
-                  : undefined;
+              <form.Field name="dispatchDate">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  const selectedDate = field.state.value
+                    ? parseDateOnly(field.state.value)
+                    : undefined;
 
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <DatePickerInput
-                      id="edit-dispatch-date"
-                      label="Dispatch date"
-                      placeholder="Pick a date"
-                      value={selectedDate}
-                      aria-invalid={isInvalid}
-                      onDateChange={field.handleChange}
-                      onBlur={field.handleBlur}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <DatePickerInput
+                        id="edit-dispatch-date"
+                        label="Dispatch date"
+                        placeholder="Pick a date"
+                        value={selectedDate}
+                        aria-invalid={isInvalid}
+                        onDateChange={field.handleChange}
+                        onBlur={field.handleBlur}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="truckNumber">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-truck-number">
-                      Truck number
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-truck-number"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value.toUpperCase())
-                      }
-                      aria-invalid={isInvalid}
-                      className="uppercase"
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="truckNumber">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-truck-number">
+                        Truck number
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-truck-number"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value.toUpperCase())
+                        }
+                        aria-invalid={isInvalid}
+                        className="uppercase"
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="generationId">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-generation">
-                      Generation
-                    </FieldLabel>
-                    <SearchableComboboxField
-                      id="edit-dispatch-generation"
-                      name={field.name}
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                      onBlur={field.handleBlur}
-                      isInvalid={isInvalid}
-                      placeholder="Search generations…"
-                      emptyMessage="No generations found."
-                      options={generationOptions}
-                      portalContainer={portalContainerRef}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="generationId">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-generation">
+                        Generation
+                      </FieldLabel>
+                      <SearchableComboboxField
+                        id="edit-dispatch-generation"
+                        name={field.name}
+                        value={field.state.value}
+                        onValueChange={field.handleChange}
+                        onBlur={field.handleBlur}
+                        isInvalid={isInvalid}
+                        placeholder="Search generations…"
+                        emptyMessage="No generations found."
+                        options={generationOptions}
+                        portalContainer={portalContainerRef}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="locationId">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-location">
-                      From location (optional)
-                    </FieldLabel>
-                    <SearchableComboboxField
-                      id="edit-dispatch-location"
-                      name={field.name}
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                      onBlur={field.handleBlur}
-                      isInvalid={isInvalid}
-                      placeholder="Search locations…"
-                      emptyMessage="No locations found."
-                      options={locationOptions}
-                      portalContainer={portalContainerRef}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="locationId">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-location">
+                        From location (optional)
+                      </FieldLabel>
+                      <SearchableComboboxField
+                        id="edit-dispatch-location"
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onValueChange={field.handleChange}
+                        onBlur={field.handleBlur}
+                        isInvalid={isInvalid}
+                        placeholder="Search locations…"
+                        emptyMessage="No locations found."
+                        options={locationOptions}
+                        portalContainer={portalContainerRef}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="toLocation">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-to-location">
-                      To location (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-to-location"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="toLocation">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-to-location">
+                        To location (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-to-location"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="manualGatePassNumber">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-manual-gate-pass">
-                      Manual gate pass number (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-manual-gate-pass"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="manualGatePassNumber">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-manual-gate-pass">
+                        Manual gate pass number (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-manual-gate-pass"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="weightSlipNumber">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-weight-slip-number">
-                      Weight slip number (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-weight-slip-number"
-                      name={field.name}
-                      inputMode="numeric"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="weightSlipNumber">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-weight-slip-number">
+                        Weight slip number (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-weight-slip-number"
+                        name={field.name}
+                        inputMode="numeric"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="driverMobileNumber">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-driver-mobile">
-                      Driver mobile number (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-driver-mobile"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="driverMobileNumber">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-driver-mobile">
+                        Driver mobile number (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-driver-mobile"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="grossWeight">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-gross-weight">
-                      Gross weight (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-gross-weight"
-                      name={field.name}
-                      inputMode="decimal"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="grossWeight">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-gross-weight">
+                        Gross weight (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-gross-weight"
+                        name={field.name}
+                        inputMode="decimal"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="tareWeight">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-tare-weight">
-                      Tare weight (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-tare-weight"
-                      name={field.name}
-                      inputMode="decimal"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="tareWeight">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-tare-weight">
+                        Tare weight (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-tare-weight"
+                        name={field.name}
+                        inputMode="decimal"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="netWeight">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-net-weight">
-                      Net weight (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-net-weight"
-                      name={field.name}
-                      inputMode="decimal"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    <FieldDescription>
-                      Keep this aligned with gross and tare weights from the slip.
-                    </FieldDescription>
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="netWeight">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-net-weight">
+                        Net weight (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-net-weight"
+                        name={field.name}
+                        inputMode="decimal"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      <FieldDescription>
+                        Keep this aligned with gross and tare weights from the
+                        slip.
+                      </FieldDescription>
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="averageWeightPerBag">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-average-weight-per-bag">
-                      Avg. weight per bag (optional)
-                    </FieldLabel>
-                    <Input
-                      id="edit-dispatch-average-weight-per-bag"
-                      name={field.name}
-                      inputMode="decimal"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="averageWeightPerBag">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-average-weight-per-bag">
+                        Avg. weight per bag (optional)
+                      </FieldLabel>
+                      <Input
+                        id="edit-dispatch-average-weight-per-bag"
+                        name={field.name}
+                        inputMode="decimal"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
 
-            <form.Field name="remarks">
-              {(field) => {
-                const isInvalid = isFieldInvalid(field.state.meta);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor="edit-dispatch-remarks">
-                      Remarks (optional)
-                    </FieldLabel>
-                    <Textarea
-                      id="edit-dispatch-remarks"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid ? (
-                      <FieldError errors={field.state.meta.errors} />
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
+              <form.Field name="remarks">
+                {(field) => {
+                  const isInvalid = isFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="edit-dispatch-remarks">
+                        Remarks (optional)
+                      </FieldLabel>
+                      <Textarea
+                        id="edit-dispatch-remarks"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
             </FieldGroup>
           </div>
 
           <SheetFooter className="border-t px-6 py-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <form.Subscribe selector={(state) => state.canSubmit}>

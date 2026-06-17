@@ -155,10 +155,10 @@ export function DispatchDetailsStep({
     },
     onSubmit: async ({ value }) => {
       const requisitionInput = selectionsToInput(selections);
-      const hasGrossWeight = value.grossWeight.trim().length > 0;
-      const hasTareWeight = value.tareWeight.trim().length > 0;
-      const grossWeight = parseWeightValue(value.grossWeight);
-      const tareWeight = parseWeightValue(value.tareWeight);
+      const hasGrossWeight = (value.grossWeight ?? "").trim().length > 0;
+      const hasTareWeight = (value.tareWeight ?? "").trim().length > 0;
+      const grossWeight = parseWeightValue(value.grossWeight ?? "");
+      const tareWeight = parseWeightValue(value.tareWeight ?? "");
       const netWeight = grossWeight - tareWeight;
       const hasCalculatedNet =
         hasGrossWeight && hasTareWeight && netWeight >= 0;
@@ -177,10 +177,7 @@ export function DispatchDetailsStep({
   });
 
   return (
-    <Card
-      ref={portalContainerRef}
-      className="w-full shadow-sm"
-    >
+    <Card ref={portalContainerRef} className="w-full shadow-sm">
       <CardHeader className="border-b bg-muted/30 pb-6">
         <CardTitle className="text-2xl">Dispatch details</CardTitle>
         <CardDescription className="text-base">
@@ -391,7 +388,8 @@ export function DispatchDetailsStep({
                 Location and generation
               </FieldLegend>
               <FieldDescription>
-                Generation and source or destination locations for this dispatch.
+                Generation and source or destination locations for this
+                dispatch.
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
                 <form.Field name="generationId">
@@ -499,14 +497,15 @@ export function DispatchDetailsStep({
                 })}
               >
                 {({ grossWeight, tareWeight }) => {
-                  const hasGrossWeight = grossWeight.trim().length > 0;
-                  const hasTareWeight = tareWeight.trim().length > 0;
-                  const gross = parseWeightValue(grossWeight);
-                  const tare = parseWeightValue(tareWeight);
+                  const hasGrossWeight = (grossWeight ?? "").trim().length > 0;
+                  const hasTareWeight = (tareWeight ?? "").trim().length > 0;
+                  const gross = parseWeightValue(grossWeight ?? "");
+                  const tare = parseWeightValue(tareWeight ?? "");
                   const net = gross - tare;
                   const hasCalculatedNet =
                     hasGrossWeight && hasTareWeight && net >= 0;
-                  const hasCalculatedAverage = hasCalculatedNet && totalBags > 0;
+                  const hasCalculatedAverage =
+                    hasCalculatedNet && totalBags > 0;
                   const averageWeightPerBag = hasCalculatedAverage
                     ? net / totalBags
                     : 0;
@@ -536,7 +535,9 @@ export function DispatchDetailsStep({
                                   autoComplete="off"
                                 />
                                 {isInvalid ? (
-                                  <FieldError errors={field.state.meta.errors} />
+                                  <FieldError
+                                    errors={field.state.meta.errors}
+                                  />
                                 ) : null}
                               </Field>
                             );
@@ -564,7 +565,9 @@ export function DispatchDetailsStep({
                                   placeholder="Total weight"
                                 />
                                 {isInvalid ? (
-                                  <FieldError errors={field.state.meta.errors} />
+                                  <FieldError
+                                    errors={field.state.meta.errors}
+                                  />
                                 ) : null}
                               </Field>
                             );
@@ -592,7 +595,9 @@ export function DispatchDetailsStep({
                                   placeholder="Tare weight"
                                 />
                                 {isInvalid ? (
-                                  <FieldError errors={field.state.meta.errors} />
+                                  <FieldError
+                                    errors={field.state.meta.errors}
+                                  />
                                 ) : null}
                               </Field>
                             );
@@ -640,7 +645,10 @@ export function DispatchDetailsStep({
                     const isInvalid = isFieldInvalid(field.state.meta);
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="dispatch-remarks" className="sr-only">
+                        <FieldLabel
+                          htmlFor="dispatch-remarks"
+                          className="sr-only"
+                        >
                           Remarks
                         </FieldLabel>
                         <Textarea

@@ -96,16 +96,6 @@ const DEFAULT_ROLE_PERMISSIONS: Record<
   [Role.USER]: [...DASHBOARD_READ],
 };
 
-const SEED_REQUISITION_ID = "seed-requisition-001";
-const SEED_REQUISITION_ID_2 = "seed-requisition-002";
-const SEED_REQUISITION_ID_3 = "seed-requisition-003";
-const SEED_REQUISITION_ID_4 = "seed-requisition-004";
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
-});
-const prisma = new PrismaClient({ adapter });
-
 const VARIETIES = ["Himalini", "B101", "Jyoti"] as const;
 
 const GENERATIONS = ["G2", "G3", "Foundation", "Certified"] as const;
@@ -127,138 +117,26 @@ const SIZES = [
   "ungraded",
 ] as const;
 
-async function upsertCredentialUser({
-  email,
-  name,
-  role,
-  password = "12345678",
-}: {
-  email: string;
-  name: string;
-  role: Role;
-  password?: string;
-}) {
-  const existing = await prisma.user.findUnique({ where: { email } });
+const LOCATIONS = [
+  { name: "Bazpur Cold Store", category: "Source" },
+  { name: "Kashipur Warehouse", category: "Source" },
+  { name: "Rudrapur Processing Unit", category: "Source" },
+] as const;
 
-  if (existing) {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: { role, name },
-    });
-    return existing.id;
-  }
+const SEED_IDS = {
+  requisitionPending: "seed-requisition-001",
+  requisitionApprovedPartial: "seed-requisition-002",
+  requisitionPending2: "seed-requisition-003",
+  requisitionApprovedOpen: "seed-requisition-004",
+  dispatch: "seed-dispatch-001",
+} as const;
 
-  const userId = generateId();
-  const hashedPassword = await hashPassword(password);
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
+});
+const prisma = new PrismaClient({ adapter });
 
-  await prisma.user.create({
-    data: {
-      id: userId,
-      name,
-      email,
-      emailVerified: true,
-      role,
-      accounts: {
-        create: {
-          id: generateId(),
-          accountId: userId,
-          providerId: "credential",
-          password: hashedPassword,
-        },
-      },
-    },
-  });
-
-  return userId;
-}
-
-async function seedUsers() {
-  for (const user of SEED_USERS) {
-    await upsertCredentialUser({ ...user, password: SEED_PASSWORD });
-  }
-}
-
-async function seedRolePermissions() {
-  for (const role of Object.values(Role)) {
-    if (role === Role.MANAGING_DIRECTOR) continue;
-
-    const grants = DEFAULT_ROLE_PERMISSIONS[role];
-    await prisma.rolePermission.deleteMany({ where: { role } });
-
-    if (grants.length > 0) {
-      await prisma.rolePermission.createMany({
-        data: grants.map((grant) => ({
-          role,
-          resource: grant.resource,
-          action: grant.action,
-        })),
-      });
-    }
-  }
-
-  const permissionsGrants = [
-    { resource: "permissions", action: "read" },
-    { resource: "permissions", action: "write" },
-  ];
-
-  await prisma.rolePermission.createMany({
-    data: permissionsGrants.map((grant) => ({
-      role: Role.MANAGING_DIRECTOR,
-      ...grant,
-    })),
-    skipDuplicates: true,
-  });
-}
-
-async function seedRequisition({
-  id,
-  farmerId,
-  varietyId,
-  createdById,
-  status = RequisitionStatus.PENDING,
-}: {
-  id: string;
-  farmerId: string;
-  varietyId: string;
-  createdById: string;
-  status?: RequisitionStatus;
-}) {
-  await prisma.requisition.upsert({
-    where: { id },
-    create: {
-      id,
-      requisitionDate: new Date("2026-06-01"),
-      expectedDeliveryDate: new Date("2026-06-15"),
-      acres: 2.5,
-      initialQuantity: 100,
-      fulfilledQuantity: 0,
-      status,
-      farmerId,
-      varietyId,
-      createdById,
-    },
-    update: {
-      requisitionDate: new Date("2026-06-01"),
-      expectedDeliveryDate: new Date("2026-06-15"),
-      acres: 2.5,
-      initialQuantity: 100,
-      fulfilledQuantity: 0,
-      status,
-      rejectionRemarks: null,
-      reviewedById: status === RequisitionStatus.PENDING ? null : createdById,
-      reviewedAt: status === RequisitionStatus.PENDING ? null : new Date(),
-      approvalDate:
-        status === RequisitionStatus.APPROVED ? new Date("2026-06-10") : null,
-      rejectionDate:
-        status === RequisitionStatus.REJECTED ? new Date("2026-06-10") : null,
-      farmerId,
-      varietyId,
-      createdById,
-    },
-  });
-}
-
-async function clearAppData() {
+async function clearAllData() {
   await prisma.dispatchRequisitionSizeLine.deleteMany();
   await prisma.dispatchRequisition.deleteMany();
   await prisma.dispatch.deleteMany();
@@ -277,61 +155,125 @@ async function clearAppData() {
   await prisma.user.deleteMany();
 }
 
-async function main() {
-  await clearAppData();
-  await seedUsers();
-  await seedRolePermissions();
+async function createCredentialUser({
+  email,
+  name,
+  role,
+  stationId,
+  password = SEED_PASSWORD,
+}: {
+  email: string;
+  name: string;
+  role: Role;
+  stationId?: string;
+  password?: string;
+}) {
+  const userId = generateId();
+  const hashedPassword = await hashPassword(password);
 
+  await prisma.user.create({
+    data: {
+      id: userId,
+      name,
+      email,
+      emailVerified: true,
+      role,
+      stationId: stationId ?? null,
+      accounts: {
+        create: {
+          id: generateId(),
+          accountId: userId,
+          providerId: "credential",
+          password: hashedPassword,
+        },
+      },
+    },
+  });
+
+  return userId;
+}
+
+async function seedUsers(stationId: string) {
+  for (const user of SEED_USERS) {
+    const stationIdForUser =
+      user.role === Role.FIELD_OFFICER ? stationId : undefined;
+    await createCredentialUser({ ...user, stationId: stationIdForUser });
+  }
+}
+
+async function seedRolePermissions() {
+  for (const role of Object.values(Role)) {
+    if (role === Role.MANAGING_DIRECTOR) continue;
+
+    const grants = DEFAULT_ROLE_PERMISSIONS[role];
+    if (grants.length > 0) {
+      await prisma.rolePermission.createMany({
+        data: grants.map((grant) => ({
+          role,
+          resource: grant.resource,
+          action: grant.action,
+        })),
+      });
+    }
+  }
+
+  await prisma.rolePermission.createMany({
+    data: [
+      { role: Role.MANAGING_DIRECTOR, resource: "permissions", action: "read" },
+      { role: Role.MANAGING_DIRECTOR, resource: "permissions", action: "write" },
+    ],
+  });
+}
+
+async function seedMasterData() {
   for (const name of VARIETIES) {
-    await prisma.variety.upsert({
-      where: { name },
-      create: { name },
-      update: {},
-    });
+    await prisma.variety.create({ data: { name } });
   }
 
   for (const name of GENERATIONS) {
-    await prisma.generation.upsert({
-      where: { name },
-      create: { name },
-      update: {},
-    });
+    await prisma.generation.create({ data: { name } });
   }
 
   for (const name of SIZES) {
-    await prisma.size.upsert({
-      where: { name },
-      create: { name },
-      update: {},
-    });
+    await prisma.size.create({ data: { name } });
   }
 
-  let station = await prisma.station.findFirst({ where: { name: "Bazpur" } });
-  if (!station) {
-    station = await prisma.station.create({
-      data: {
-        name: "Bazpur",
-        city: "Bazpur",
-        state: "Uttarakhand",
-      },
-    });
+  for (const location of LOCATIONS) {
+    await prisma.location.create({ data: location });
   }
+}
 
-  let locality = await prisma.locality.findFirst({
-    where: { name: "Puranpur", stationId: station.id },
+async function seedGeography() {
+  const bazpurStation = await prisma.station.create({
+    data: {
+      name: "Bazpur",
+      city: "Bazpur",
+      state: "Uttarakhand",
+    },
   });
-  if (!locality) {
-    locality = await prisma.locality.create({
-      data: {
-        name: "Puranpur",
-        stationId: station.id,
-      },
-    });
-  }
 
-  const farmer = await prisma.farmer.upsert({
-    where: { accountNumber: "1" },
-    create: {
+  const kashipurStation = await prisma.station.create({
+    data: {
+      name: "Kashipur",
+      city: "Kashipur",
+      state: "Uttarakhand",
+    },
+  });
+
+  const puranpurLocality = await prisma.locality.create({
+    data: { name: "Puranpur", stationId: bazpurStation.id },
+  });
+
+  const bazpurZone1Locality = await prisma.locality.create({
+    data: { name: "Zone 1", stationId: bazpurStation.id },
+  });
+
+  const kashipurZone1Locality = await prisma.locality.create({
+    data: { name: "Zone 1", stationId: kashipurStation.id },
+  });
+
+  const amandeepFarmer = await prisma.farmer.create({
+    data: {
       name: "Amandeep Singh S/O Kashmir Singh",
       accountNumber: "1",
       mobileNumber: "9876543210",
@@ -342,85 +284,25 @@ async function main() {
       bankAccountNumber: "12345678901234",
       bankIfscCode: "PUNB0123400",
       bankBranchName: "Bazpur",
-      stationId: station.id,
-      localityId: locality.id,
-    },
-    update: {
-      name: "Amandeep Singh S/O Kashmir Singh",
-      mobileNumber: "9876543210",
-      aadharNumber: "234567891234",
-      panCardNumber: "ABCPK1234D",
-      bankAccountName: "Amandeep Singh",
-      bankName: "Punjab National Bank",
-      bankAccountNumber: "12345678901234",
-      bankIfscCode: "PUNB0123400",
-      bankBranchName: "Bazpur",
-      stationId: station.id,
-      localityId: locality.id,
+      stationId: bazpurStation.id,
+      localityId: puranpurLocality.id,
     },
   });
 
-  let bazpurZone1Locality = await prisma.locality.findFirst({
-    where: { name: "Zone 1", stationId: station.id },
-  });
-  if (!bazpurZone1Locality) {
-    bazpurZone1Locality = await prisma.locality.create({
-      data: {
-        name: "Zone 1",
-        stationId: station.id,
-      },
-    });
-  }
-
-  let kashipurStation = await prisma.station.findFirst({
-    where: { name: "Kashipur" },
-  });
-  if (!kashipurStation) {
-    kashipurStation = await prisma.station.create({
-      data: {
-        name: "Kashipur",
-        city: "Kashipur",
-        state: "Uttarakhand",
-      },
-    });
-  }
-
-  let kashipurZone1Locality = await prisma.locality.findFirst({
-    where: { name: "Zone 1", stationId: kashipurStation.id },
-  });
-  if (!kashipurZone1Locality) {
-    kashipurZone1Locality = await prisma.locality.create({
-      data: {
-        name: "Zone 1",
-        stationId: kashipurStation.id,
-      },
-    });
-  }
-
-  const ajitFarmer = await prisma.farmer.upsert({
-    where: { accountNumber: "83" },
-    create: {
+  const ajitFarmer = await prisma.farmer.create({
+    data: {
       name: "Ajit Singh Punia S/O Harkewal Singh",
       accountNumber: "83",
       mobileNumber: "9639400000",
       aadharNumber: "443322110987",
       panCardNumber: "AJITP1234K",
-      stationId: station.id,
-      localityId: bazpurZone1Locality.id,
-    },
-    update: {
-      name: "Ajit Singh Punia S/O Harkewal Singh",
-      mobileNumber: "9639400000",
-      aadharNumber: "443322110987",
-      panCardNumber: "AJITP1234K",
-      stationId: station.id,
+      stationId: bazpurStation.id,
       localityId: bazpurZone1Locality.id,
     },
   });
 
-  const tirathFarmer = await prisma.farmer.upsert({
-    where: { accountNumber: "82" },
-    create: {
+  const tirathFarmer = await prisma.farmer.create({
+    data: {
       name: "Tirath Singh S/O Gurcharan Singh",
       accountNumber: "82",
       mobileNumber: "9917146444",
@@ -429,53 +311,192 @@ async function main() {
       stationId: kashipurStation.id,
       localityId: kashipurZone1Locality.id,
     },
-    update: {
-      name: "Tirath Singh S/O Gurcharan Singh",
-      mobileNumber: "9917146444",
-      aadharNumber: "556677889900",
-      panCardNumber: "TIRAT1234L",
-      stationId: kashipurStation.id,
-      localityId: kashipurZone1Locality.id,
+  });
+
+  return {
+    bazpurStation,
+    amandeepFarmer,
+    ajitFarmer,
+    tirathFarmer,
+  };
+}
+
+async function seedRequisitions({
+  varietyId,
+  createdById,
+  reviewedById,
+  amandeepFarmerId,
+  ajitFarmerId,
+  tirathFarmerId,
+}: {
+  varietyId: string;
+  createdById: string;
+  reviewedById: string;
+  amandeepFarmerId: string;
+  ajitFarmerId: string;
+  tirathFarmerId: string;
+}) {
+  await prisma.requisition.create({
+    data: {
+      id: SEED_IDS.requisitionPending,
+      requisitionDate: new Date("2026-06-01"),
+      expectedDeliveryDate: new Date("2026-06-15"),
+      acres: 2.5,
+      initialQuantity: 100,
+      fulfilledQuantity: 0,
+      status: RequisitionStatus.PENDING,
+      farmerId: amandeepFarmerId,
+      varietyId,
+      createdById,
     },
   });
+
+  await prisma.requisition.create({
+    data: {
+      id: SEED_IDS.requisitionApprovedPartial,
+      requisitionDate: new Date("2026-06-02"),
+      expectedDeliveryDate: new Date("2026-06-16"),
+      approvedDeliveryDate: new Date("2026-06-12"),
+      acres: 3,
+      initialQuantity: 100,
+      fulfilledQuantity: 40,
+      status: RequisitionStatus.APPROVED,
+      farmerId: amandeepFarmerId,
+      varietyId,
+      createdById,
+      reviewedById,
+      reviewedAt: new Date("2026-06-10T10:00:00.000Z"),
+      approvalDate: new Date("2026-06-10"),
+    },
+  });
+
+  await prisma.requisition.create({
+    data: {
+      id: SEED_IDS.requisitionPending2,
+      requisitionDate: new Date("2026-06-03"),
+      expectedDeliveryDate: new Date("2026-06-18"),
+      acres: 1.5,
+      initialQuantity: 60,
+      fulfilledQuantity: 0,
+      status: RequisitionStatus.PENDING,
+      farmerId: ajitFarmerId,
+      varietyId,
+      createdById,
+    },
+  });
+
+  await prisma.requisition.create({
+    data: {
+      id: SEED_IDS.requisitionApprovedOpen,
+      requisitionDate: new Date("2026-06-04"),
+      expectedDeliveryDate: new Date("2026-06-20"),
+      approvedDeliveryDate: new Date("2026-06-14"),
+      acres: 2,
+      initialQuantity: 80,
+      fulfilledQuantity: 0,
+      status: RequisitionStatus.APPROVED,
+      farmerId: tirathFarmerId,
+      varietyId,
+      createdById,
+      reviewedById,
+      reviewedAt: new Date("2026-06-11T10:00:00.000Z"),
+      approvalDate: new Date("2026-06-11"),
+    },
+  });
+}
+
+async function seedDispatch({
+  requisitionId,
+  generationId,
+  locationId,
+  sizeId,
+}: {
+  requisitionId: string;
+  generationId: string;
+  locationId: string;
+  sizeId: string;
+}) {
+  await prisma.dispatch.create({
+    data: {
+      id: SEED_IDS.dispatch,
+      dispatchDate: new Date("2026-06-12"),
+      dateOfReceiving: new Date("2026-06-13"),
+      truckNumber: "UP32AB1234",
+      manualGatePassNumber: "GP-1001",
+      weightSlipNumber: "12345",
+      grossWeight: 5200,
+      tareWeight: 1200,
+      netWeight: 4000,
+      averageWeightPerBag: 100,
+      driverMobileNumber: "9876501234",
+      remarks: "Seed dispatch for testing",
+      generationId,
+      locationId,
+      toLocation: "Puranpur Field",
+      requisitions: {
+        create: {
+          requisitionId,
+          sizeLines: {
+            create: {
+              sizeId,
+              quantity: 40,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+async function main() {
+  console.log("Clearing all data…");
+  await clearAllData();
+
+  const { bazpurStation, amandeepFarmer, ajitFarmer, tirathFarmer } =
+    await seedGeography();
+
+  console.log("Seeding users and permissions…");
+  await seedUsers(bazpurStation.id);
+  await seedRolePermissions();
+
+  console.log("Seeding master data…");
+  await seedMasterData();
 
   const variety = await prisma.variety.findUniqueOrThrow({
     where: { name: "Himalini" },
   });
-  const createdBy = await prisma.user.findUniqueOrThrow({
+  const generation = await prisma.generation.findUniqueOrThrow({
+    where: { name: "G2" },
+  });
+  const size = await prisma.size.findUniqueOrThrow({
+    where: { name: "25-30" },
+  });
+  const location = await prisma.location.findUniqueOrThrow({
+    where: { name: "Bazpur Cold Store" },
+  });
+  const fieldOfficer = await prisma.user.findUniqueOrThrow({
     where: { email: "field.officer@example.com" },
   });
-
-  await seedRequisition({
-    id: SEED_REQUISITION_ID,
-    farmerId: farmer.id,
-    varietyId: variety.id,
-    createdById: createdBy.id,
-    status: RequisitionStatus.PENDING,
+  const programmeManager = await prisma.user.findUniqueOrThrow({
+    where: { email: "programme.manager@example.com" },
   });
 
-  await seedRequisition({
-    id: SEED_REQUISITION_ID_2,
-    farmerId: farmer.id,
+  console.log("Seeding requisitions…");
+  await seedRequisitions({
     varietyId: variety.id,
-    createdById: createdBy.id,
-    status: RequisitionStatus.APPROVED,
+    createdById: fieldOfficer.id,
+    reviewedById: programmeManager.id,
+    amandeepFarmerId: amandeepFarmer.id,
+    ajitFarmerId: ajitFarmer.id,
+    tirathFarmerId: tirathFarmer.id,
   });
 
-  await seedRequisition({
-    id: SEED_REQUISITION_ID_3,
-    farmerId: ajitFarmer.id,
-    varietyId: variety.id,
-    createdById: createdBy.id,
-    status: RequisitionStatus.PENDING,
-  });
-
-  await seedRequisition({
-    id: SEED_REQUISITION_ID_4,
-    farmerId: tirathFarmer.id,
-    varietyId: variety.id,
-    createdById: createdBy.id,
-    status: RequisitionStatus.APPROVED,
+  console.log("Seeding dispatches…");
+  await seedDispatch({
+    requisitionId: SEED_IDS.requisitionApprovedPartial,
+    generationId: generation.id,
+    locationId: location.id,
+    sizeId: size.id,
   });
 
   console.log("Seed complete:");
@@ -485,10 +506,12 @@ async function main() {
   console.log(`  ${VARIETIES.length} varieties`);
   console.log(`  ${GENERATIONS.length} generations`);
   console.log(`  ${SIZES.length} sizes`);
+  console.log(`  ${LOCATIONS.length} locations`);
   console.log(
-    "  2 stations (Bazpur, Kashipur), 3 localities (Puranpur, Bazpur Zone 1, Kashipur Zone 1), 3 farmers",
+    "  2 stations (Bazpur, Kashipur), 3 localities, 3 farmers",
   );
   console.log("  4 requisitions (2 pending, 2 approved)");
+  console.log("  1 dispatch (40 bags on partially fulfilled requisition)");
   console.log("  default role permissions seeded");
 }
 
