@@ -110,15 +110,18 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
     });
   }
 
-  function handleApproveConfirm() {
+  function handleApproveConfirm(approvedDeliveryDate: string) {
     if (!approvingRequisition) return;
 
-    approveMutation.mutate(approvingRequisition.id, {
-      onSuccess: () => {
-        setApproveOpen(false);
-        setApprovingRequisition(null);
+    approveMutation.mutate(
+      { id: approvingRequisition.id, approvedDeliveryDate },
+      {
+        onSuccess: () => {
+          setApproveOpen(false);
+          setApprovingRequisition(null);
+        },
       },
-    });
+    );
   }
 
   function handleRejectConfirm(rejectionRemarks: string) {
@@ -183,6 +186,7 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
         open={approveOpen}
         onOpenChange={setApproveOpen}
         farmerName={approvingRequisition?.farmer.name ?? ""}
+        requestedDeliveryDate={approvingRequisition?.requestedDeliveryDate}
         onConfirm={handleApproveConfirm}
         isPending={approveMutation.isPending}
       />

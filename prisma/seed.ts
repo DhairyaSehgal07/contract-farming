@@ -340,7 +340,7 @@ async function seedRequisitions({
     data: {
       id: SEED_IDS.requisitionPending,
       requisitionDate: new Date("2026-06-01"),
-      expectedDeliveryDate: new Date("2026-06-15"),
+      requestedDeliveryDate: new Date("2026-06-15"),
       acres: 2.5,
       initialQuantity: 100,
       fulfilledQuantity: 0,
@@ -355,7 +355,7 @@ async function seedRequisitions({
     data: {
       id: SEED_IDS.requisitionApprovedPartial,
       requisitionDate: new Date("2026-06-02"),
-      expectedDeliveryDate: new Date("2026-06-16"),
+      requestedDeliveryDate: new Date("2026-06-16"),
       approvedDeliveryDate: new Date("2026-06-12"),
       acres: 3,
       initialQuantity: 100,
@@ -374,7 +374,7 @@ async function seedRequisitions({
     data: {
       id: SEED_IDS.requisitionPending2,
       requisitionDate: new Date("2026-06-03"),
-      expectedDeliveryDate: new Date("2026-06-18"),
+      requestedDeliveryDate: new Date("2026-06-18"),
       acres: 1.5,
       initialQuantity: 60,
       fulfilledQuantity: 0,
@@ -389,7 +389,7 @@ async function seedRequisitions({
     data: {
       id: SEED_IDS.requisitionApprovedOpen,
       requisitionDate: new Date("2026-06-04"),
-      expectedDeliveryDate: new Date("2026-06-20"),
+      requestedDeliveryDate: new Date("2026-06-20"),
       approvedDeliveryDate: new Date("2026-06-14"),
       acres: 2,
       initialQuantity: 80,

@@ -225,7 +225,7 @@ model RolePermission {
 model Requisition {
   id                   String            @id @default(cuid())
   requisitionDate      DateTime          @db.Date
-  expectedDeliveryDate DateTime          @db.Date
+  requestedDeliveryDate DateTime          @db.Date
   approvedDeliveryDate DateTime?         @db.Date
   acres                Decimal?          @db.Decimal(10, 2)
   initialQuantity      Decimal?          @db.Decimal(12, 2)
@@ -258,7 +258,7 @@ model Requisition {
   @@index([reviewedById])
   @@index([status])
   @@index([requisitionDate])
-  @@index([expectedDeliveryDate])
+  @@index([requestedDeliveryDate])
   @@map("requisition")
 }
 

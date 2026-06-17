@@ -18,6 +18,8 @@ import {
   requireRequisitionWriteAction,
 } from "@/lib/schemas/requisition/auth";
 import {
+  type ApproveRequisitionInput,
+  approveRequisitionSchema,
   type CreateRequisitionInput,
   createRequisitionSchema,
   normalizeRequisitionInput,
@@ -72,7 +74,7 @@ type RequisitionDetailWithRelations = NonNullable<
 export type RequisitionRow = {
   id: string;
   requisitionDate: string;
-  expectedDeliveryDate: string;
+  requestedDeliveryDate: string;
   acres: string | null;
   initialQuantity: string | null;
   status: RequisitionStatus;
@@ -140,7 +142,7 @@ function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
   return {
     id: row.id,
     requisitionDate: row.requisitionDate.toISOString().slice(0, 10),
-    expectedDeliveryDate: row.expectedDeliveryDate.toISOString().slice(0, 10),
+    requestedDeliveryDate: row.requestedDeliveryDate.toISOString().slice(0, 10),
     acres: row.acres?.toString() ?? null,
     initialQuantity: row.initialQuantity?.toString() ?? null,
     status: row.status,
@@ -367,8 +369,8 @@ export async function createRequisition(
     const requisition = await prisma.requisition.create({
       data: {
         requisitionDate: new Date(`${data.requisitionDate}T00:00:00.000Z`),
-        expectedDeliveryDate: new Date(
-          `${data.expectedDeliveryDate}T00:00:00.000Z`,
+        requestedDeliveryDate: new Date(
+          `${data.requestedDeliveryDate}T00:00:00.000Z`,
         ),
         acres: data.acres ?? null,
         initialQuantity: data.quantity ?? null,
@@ -409,8 +411,8 @@ export async function updateRequisition(
       where: { id },
       data: {
         requisitionDate: new Date(`${rest.requisitionDate}T00:00:00.000Z`),
-        expectedDeliveryDate: new Date(
-          `${rest.expectedDeliveryDate}T00:00:00.000Z`,
+        requestedDeliveryDate: new Date(
+          `${rest.requestedDeliveryDate}T00:00:00.000Z`,
         ),
         acres: rest.acres ?? null,
         initialQuantity: rest.quantity ?? null,
@@ -448,7 +450,7 @@ export async function deleteRequisition(id: string): Promise<ActionResult> {
 }
 
 export async function approveRequisition(
-  id: string,
+  input: ApproveRequisitionInput,
 ): Promise<ActionResult<RequisitionRow>> {
   const authError = await requireRequisitionApproveAction();
   if (authError) return authError;
@@ -461,9 +463,12 @@ export async function approveRequisition(
     return actionError("You must be signed in to perform this action.");
   }
 
-  if (!id) {
-    return actionError("ID is required.");
+  const parsed = approveRequisitionSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
+
+  const { id, approvedDeliveryDate } = parsed.data;
 
   const role = getEffectiveRole(session);
   const existing = await getApprovableRequisition(id, session.user.id, role);
@@ -484,6 +489,9 @@ export async function approveRequisition(
         reviewedById: session.user.id,
         reviewedAt: new Date(),
         approvalDate,
+        approvedDeliveryDate: new Date(
+          `${approvedDeliveryDate}T00:00:00.000Z`,
+        ),
         rejectionDate: null,
         rejectionRemarks: null,
       },

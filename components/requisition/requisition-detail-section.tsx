@@ -154,10 +154,13 @@ function RequisitionDetailContent({
     });
   }
 
-  function handleApproveConfirm() {
-    approveMutation.mutate(data.id, {
-      onSuccess: () => setApproveOpen(false),
-    });
+  function handleApproveConfirm(approvedDeliveryDate: string) {
+    approveMutation.mutate(
+      { id: data.id, approvedDeliveryDate },
+      {
+        onSuccess: () => setApproveOpen(false),
+      },
+    );
   }
 
   function handleRejectConfirm(rejectionRemarks: string) {
@@ -268,8 +271,8 @@ function RequisitionDetailContent({
                   value={formatDate(data.requisitionDate)}
                 />
                 <DetailField
-                  label="Expected delivery"
-                  value={formatDate(data.expectedDeliveryDate)}
+                  label="Requested delivery"
+                  value={formatDate(data.requestedDeliveryDate)}
                 />
                 <DetailField
                   label="Approved delivery"
@@ -389,6 +392,7 @@ function RequisitionDetailContent({
         open={approveOpen}
         onOpenChange={setApproveOpen}
         farmerName={data.farmer.name}
+        requestedDeliveryDate={data.requestedDeliveryDate}
         onConfirm={handleApproveConfirm}
         isPending={approveMutation.isPending}
       />

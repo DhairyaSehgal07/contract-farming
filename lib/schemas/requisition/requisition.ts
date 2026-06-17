@@ -20,7 +20,7 @@ export const requisitionFormSchema = z.object({
   farmerId: z.string().min(1, "Farmer is required"),
   varietyId: z.string().min(1, "Variety is required"),
   requisitionDate: requiredDate,
-  expectedDeliveryDate: requiredDate,
+  requestedDeliveryDate: requiredDate,
   acres: optionalDecimal,
   quantity: optionalDecimal,
 });
@@ -43,6 +43,13 @@ export const rejectRequisitionSchema = z.object({
 });
 
 export type RejectRequisitionInput = z.infer<typeof rejectRequisitionSchema>;
+
+export const approveRequisitionSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  approvedDeliveryDate: requiredDate,
+});
+
+export type ApproveRequisitionInput = z.infer<typeof approveRequisitionSchema>;
 
 function emptyToUndefined(value: string | undefined) {
   return value?.trim() ? value.trim() : undefined;

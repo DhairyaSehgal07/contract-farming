@@ -25,11 +25,6 @@ type RequisitionColumnActions = {
   onReject: (row: RequisitionRow) => void;
 };
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-IN", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
 function formatDate(value: string) {
   return parseDateOnly(value).toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -54,11 +49,11 @@ export function createRequisitionColumns(
       cell: ({ row }) => formatDate(row.original.requisitionDate),
     },
     {
-      accessorKey: "expectedDeliveryDate",
+      accessorKey: "requestedDeliveryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expected delivery" />
+        <DataTableColumnHeader column={column} title="Requested delivery" />
       ),
-      cell: ({ row }) => formatDate(row.original.expectedDeliveryDate),
+      cell: ({ row }) => formatDate(row.original.requestedDeliveryDate),
     },
     {
       id: "farmer",
@@ -108,19 +103,6 @@ export function createRequisitionColumns(
         row.original.rejectionDate
           ? formatDate(row.original.rejectionDate)
           : "—",
-    },
-    {
-      id: "createdBy",
-      accessorFn: (row) => row.createdBy.name,
-      header: "Created by",
-    },
-    {
-      accessorKey: "createdAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created at" />
-      ),
-      cell: ({ row }) =>
-        dateTimeFormatter.format(new Date(row.original.createdAt)),
     },
     {
       id: "actions",

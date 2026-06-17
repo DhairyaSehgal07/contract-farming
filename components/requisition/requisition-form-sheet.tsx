@@ -47,7 +47,7 @@ const emptyValues: RequisitionFormInput = {
   farmerId: "",
   varietyId: "",
   requisitionDate: "",
-  expectedDeliveryDate: "",
+  requestedDeliveryDate: "",
   acres: "",
   quantity: "",
 };
@@ -61,7 +61,7 @@ function toFormValues(
     farmerId: requisition.farmerId,
     varietyId: requisition.varietyId,
     requisitionDate: requisition.requisitionDate,
-    expectedDeliveryDate: requisition.expectedDeliveryDate,
+    requestedDeliveryDate: requisition.requestedDeliveryDate,
     acres: requisition.acres ?? "",
     quantity: requisition.initialQuantity ?? "",
   };
@@ -283,7 +283,7 @@ export function RequisitionFormSheet({
                   }}
                 </form.Field>
 
-                <form.Field name="expectedDeliveryDate">
+                <form.Field name="requestedDeliveryDate">
                   {(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -294,8 +294,8 @@ export function RequisitionFormSheet({
                     return (
                       <Field data-invalid={isInvalid}>
                         <DatePickerInput
-                          id="requisition-expected-delivery-date"
-                          label="Expected delivery date"
+                          id="requisition-requested-delivery-date"
+                          label="Requested delivery date"
                           placeholder="Pick a date"
                           value={selectedDate}
                           aria-invalid={isInvalid}

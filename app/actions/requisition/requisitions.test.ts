@@ -48,7 +48,7 @@ const pendingRequisition = {
 const updatedRequisition = {
   id: "req-1",
   requisitionDate: new Date("2026-06-01"),
-  expectedDeliveryDate: new Date("2026-06-15"),
+  requestedDeliveryDate: new Date("2026-06-15"),
   acres: null,
   initialQuantity: null,
   status: RequisitionStatus.APPROVED,
@@ -90,7 +90,10 @@ describe("approveRequisition", () => {
     findUnique.mockResolvedValue(pendingRequisition as never);
     update.mockResolvedValue(updatedRequisition as never);
 
-    const result = await approveRequisition("req-1");
+    const result = await approveRequisition({
+      id: "req-1",
+      approvedDeliveryDate: "2026-06-12",
+    });
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -102,6 +105,7 @@ describe("approveRequisition", () => {
         data: expect.objectContaining({
           status: RequisitionStatus.APPROVED,
           reviewedById: "reviewer-1",
+          approvedDeliveryDate: new Date("2026-06-12T00:00:00.000Z"),
           rejectionRemarks: null,
           rejectionDate: null,
         }),
@@ -115,7 +119,10 @@ describe("approveRequisition", () => {
       status: RequisitionStatus.APPROVED,
     } as never);
 
-    const result = await approveRequisition("req-1");
+    const result = await approveRequisition({
+      id: "req-1",
+      approvedDeliveryDate: "2026-06-12",
+    });
 
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -143,7 +150,10 @@ describe("approveRequisition", () => {
     } as never);
     findUnique.mockResolvedValue(pendingRequisition as never);
 
-    const result = await approveRequisition("req-1");
+    const result = await approveRequisition({
+      id: "req-1",
+      approvedDeliveryDate: "2026-06-12",
+    });
 
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -172,10 +182,26 @@ describe("approveRequisition", () => {
     findUnique.mockResolvedValue(pendingRequisition as never);
     update.mockResolvedValue(updatedRequisition as never);
 
-    const result = await approveRequisition("req-1");
+    const result = await approveRequisition({
+      id: "req-1",
+      approvedDeliveryDate: "2026-06-12",
+    });
 
     expect(result.success).toBe(true);
     expect(update).toHaveBeenCalled();
+  });
+
+  it("requires approved delivery date", async () => {
+    const result = await approveRequisition({
+      id: "req-1",
+      approvedDeliveryDate: "",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain("Date is required");
+    }
+    expect(findUnique).not.toHaveBeenCalled();
   });
 });
 

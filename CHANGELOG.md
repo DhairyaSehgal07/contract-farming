@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.5] - 2026-06-17
+
+### Features
+
+- Require approved delivery date when approving a requisition
+- Pre-fill approve dialog with the requested delivery date
+
+### Enhancements
+
+- Rename `expectedDeliveryDate` to `requestedDeliveryDate` across schema, API, and UI
+- Replace approve confirmation alert with a dialog that includes a delivery date picker
+- Remove created-by and created-at columns from the requisition list
+
+### Database
+
+- Add migration to rename `expectedDeliveryDate` to `requestedDeliveryDate`
+
+### Tests
+
+- Update approve requisition tests for the new input shape and delivery date validation
+
 ## [0.2.4] - 2026-06-16
 
 ### Features

@@ -17,6 +17,7 @@ import {
   fetchRequisitionVarieties,
 } from "@/lib/query/requisition-fetchers";
 import type {
+  ApproveRequisitionInput,
   CreateRequisitionInput,
   RejectRequisitionInput,
   UpdateRequisitionInput,
@@ -124,8 +125,8 @@ export function useApproveRequisition() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await approveRequisition(id);
+    mutationFn: async (input: ApproveRequisitionInput) => {
+      const result = await approveRequisition(input);
       if (!result.success) {
         throw new Error(result.error);
       }

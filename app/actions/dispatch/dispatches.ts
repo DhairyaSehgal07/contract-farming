@@ -113,7 +113,7 @@ function serializeDispatchableRequisition(
   return {
     id: row.id,
     requisitionDate: row.requisitionDate.toISOString().slice(0, 10),
-    expectedDeliveryDate: row.expectedDeliveryDate.toISOString().slice(0, 10),
+    requestedDeliveryDate: row.requestedDeliveryDate.toISOString().slice(0, 10),
     acres: row.acres?.toString() ?? null,
     initialQuantity: row.initialQuantity?.toString() ?? null,
     fulfilledQuantity: row.fulfilledQuantity.toString(),
