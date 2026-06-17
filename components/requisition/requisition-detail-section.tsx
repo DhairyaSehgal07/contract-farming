@@ -188,7 +188,12 @@ function RequisitionDetailContent({
               <h2 className="font-heading text-2xl font-medium">
                 {data.farmer.name}
               </h2>
-              <RequisitionStatusBadge status={data.status} />
+              <RequisitionStatusBadge
+                status={data.status}
+                reviewedByName={data.reviewedBy?.name}
+                approvalDate={data.approvalDate}
+                rejectionRemarks={data.rejectionRemarks}
+              />
             </div>
             <p className="text-muted-foreground">
               {data.variety.name} · Requisition date{" "}

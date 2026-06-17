@@ -81,17 +81,22 @@ export function createRequisitionColumns(
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <RequisitionStatusBadge status={row.original.status} />
+        <RequisitionStatusBadge
+          status={row.original.status}
+          reviewedByName={row.original.reviewedBy?.name}
+          approvalDate={row.original.approvalDate}
+          rejectionRemarks={row.original.rejectionRemarks}
+        />
       ),
     },
     {
-      accessorKey: "approvalDate",
+      accessorKey: "approvedDeliveryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Approval date" />
+        <DataTableColumnHeader column={column} title="Approved delivery" />
       ),
       cell: ({ row }) =>
-        row.original.approvalDate
-          ? formatDate(row.original.approvalDate)
+        row.original.approvedDeliveryDate
+          ? formatDate(row.original.approvedDeliveryDate)
           : "—",
     },
     {

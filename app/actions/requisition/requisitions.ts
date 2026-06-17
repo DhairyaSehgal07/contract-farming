@@ -86,6 +86,7 @@ export type RequisitionRow = {
   reviewedAt: string | null;
   approvalDate: string | null;
   rejectionDate: string | null;
+  approvedDeliveryDate: string | null;
   createdAt: string;
   updatedAt: string;
   farmer: { name: string; accountNumber: string };
@@ -154,6 +155,8 @@ function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
     reviewedAt: row.reviewedAt?.toISOString() ?? null,
     approvalDate: row.approvalDate?.toISOString().slice(0, 10) ?? null,
     rejectionDate: row.rejectionDate?.toISOString().slice(0, 10) ?? null,
+    approvedDeliveryDate:
+      row.approvedDeliveryDate?.toISOString().slice(0, 10) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     farmer: row.farmer,
