@@ -24,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useRequisitionFarmers,
   useRequisitionVarieties,
@@ -50,6 +51,7 @@ const emptyValues: RequisitionFormInput = {
   requestedDeliveryDate: "",
   acres: "",
   quantity: "",
+  remarks: "",
 };
 
 function toFormValues(
@@ -64,6 +66,7 @@ function toFormValues(
     requestedDeliveryDate: requisition.requestedDeliveryDate,
     acres: requisition.acres ?? "",
     quantity: requisition.initialQuantity ?? "",
+    remarks: requisition.remarks ?? "",
   };
 }
 
@@ -234,24 +237,36 @@ export function RequisitionFormSheet({
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="requisition-acres">
-                          Acres (optional)
-                        </FieldLabel>
-                        <Input
-                          id="requisition-acres"
-                          inputMode="decimal"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
-                          aria-invalid={isInvalid}
-                        />
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
+                      <form.Subscribe selector={(state) => state.values.quantity}>
+                        {(quantity) => {
+                          const bagsEntered = Boolean(quantity?.trim());
+                          return (
+                            <Field data-invalid={isInvalid}>
+                              <FieldLabel htmlFor="requisition-acres">
+                                Acres
+                              </FieldLabel>
+                              <Input
+                                id="requisition-acres"
+                                inputMode="decimal"
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(event) => {
+                                  const next = event.target.value;
+                                  field.handleChange(next);
+                                  if (next.trim()) {
+                                    form.setFieldValue("quantity", "");
+                                  }
+                                }}
+                                disabled={bagsEntered}
+                                aria-invalid={isInvalid}
+                              />
+                              {isInvalid ? (
+                                <FieldError errors={field.state.meta.errors} />
+                              ) : null}
+                            </Field>
+                          );
+                        }}
+                      </form.Subscribe>
                     );
                   }}
                 </form.Field>
@@ -261,24 +276,36 @@ export function RequisitionFormSheet({
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="requisition-quantity">
-                          Initial quantity (optional)
-                        </FieldLabel>
-                        <Input
-                          id="requisition-quantity"
-                          inputMode="decimal"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
-                          aria-invalid={isInvalid}
-                        />
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
+                      <form.Subscribe selector={(state) => state.values.acres}>
+                        {(acres) => {
+                          const acresEntered = Boolean(acres?.trim());
+                          return (
+                            <Field data-invalid={isInvalid}>
+                              <FieldLabel htmlFor="requisition-quantity">
+                                Bags
+                              </FieldLabel>
+                              <Input
+                                id="requisition-quantity"
+                                inputMode="decimal"
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(event) => {
+                                  const next = event.target.value;
+                                  field.handleChange(next);
+                                  if (next.trim()) {
+                                    form.setFieldValue("acres", "");
+                                  }
+                                }}
+                                disabled={acresEntered}
+                                aria-invalid={isInvalid}
+                              />
+                              {isInvalid ? (
+                                <FieldError errors={field.state.meta.errors} />
+                              ) : null}
+                            </Field>
+                          );
+                        }}
+                      </form.Subscribe>
                     );
                   }}
                 </form.Field>
@@ -301,6 +328,32 @@ export function RequisitionFormSheet({
                           aria-invalid={isInvalid}
                           onDateChange={field.handleChange}
                           onBlur={field.handleBlur}
+                        />
+                        {isInvalid ? (
+                          <FieldError errors={field.state.meta.errors} />
+                        ) : null}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="remarks">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="requisition-remarks">
+                          Remarks
+                        </FieldLabel>
+                        <Textarea
+                          id="requisition-remarks"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) =>
+                            field.handleChange(event.target.value)
+                          }
+                          aria-invalid={isInvalid}
                         />
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />

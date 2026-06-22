@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import type { LookupConfig } from "@/components/master/lookup/lookup-types";
 import {
   fetchGenerations,
-  fetchSizes,
   fetchVarieties,
 } from "@/lib/query/master-fetchers";
 import type {
@@ -15,7 +14,6 @@ import type {
 
 const lookupFetchers = {
   variety: fetchVarieties,
-  size: fetchSizes,
   generation: fetchGenerations,
 } as const;
 

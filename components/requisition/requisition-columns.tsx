@@ -5,6 +5,7 @@ import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import type { RequisitionRow } from "@/app/actions/requisition/requisitions";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { RequisitionRemarksDisplay } from "@/components/requisition/requisition-remarks-display";
 import { RequisitionStatusBadge } from "@/components/requisition/requisition-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,8 +75,15 @@ export function createRequisitionColumns(
     },
     {
       accessorKey: "initialQuantity",
-      header: "Quantity",
+      header: "Bags",
       cell: ({ row }) => formatDecimal(row.original.initialQuantity),
+    },
+    {
+      accessorKey: "remarks",
+      header: "Remarks",
+      cell: ({ row }) => (
+        <RequisitionRemarksDisplay remarks={row.original.remarks} />
+      ),
     },
     {
       accessorKey: "status",

@@ -5,12 +5,6 @@ import {
   updateGeneration,
 } from "@/app/actions/master/generations";
 import {
-  createSize,
-  deleteSize,
-  listSizes,
-  updateSize,
-} from "@/app/actions/master/sizes";
-import {
   createVariety,
   deleteVariety,
   listVarieties,
@@ -30,19 +24,6 @@ export const varietyLookupConfig: LookupConfig = {
   update: updateVariety,
   remove: deleteVariety,
   queryKey: masterKeys.varieties(),
-};
-
-export const sizeLookupConfig: LookupConfig = {
-  entity: "size",
-  title: "Sizes",
-  description: "Manage size reference data.",
-  actionLabel: "Add Size",
-  singularLabel: "size",
-  list: listSizes,
-  create: createSize,
-  update: updateSize,
-  remove: deleteSize,
-  queryKey: masterKeys.sizes(),
 };
 
 export const generationLookupConfig: LookupConfig = {

@@ -9,7 +9,7 @@ import {
   rejectRequisition,
   updateRequisition,
 } from "@/app/actions/requisition/requisitions";
-import { requisitionKeys } from "@/lib/query/keys";
+import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
 import {
   fetchRequisition,
   fetchRequisitionFarmers,
@@ -137,6 +137,7 @@ export function useApproveRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(data.id),
       });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
       toast.success("Requisition approved");
     },
     onError: (error: Error) => {
@@ -161,6 +162,7 @@ export function useRejectRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(data.id),
       });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
       toast.success("Requisition rejected");
     },
     onError: (error: Error) => {

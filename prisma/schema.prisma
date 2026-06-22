@@ -25,6 +25,17 @@ enum RequisitionStatus {
   PENDING
   APPROVED
   REJECTED
+  FULFILLED
+}
+
+enum DispatchStatus {
+  OPEN
+  CLOSED
+}
+
+enum DispatchLotStatus {
+  PENDING
+  RECEIVED
 }
 
 model User {
@@ -45,6 +56,7 @@ model User {
   accounts             Account[]
   requisitionsCreated  Requisition[] @relation("RequisitionCreatedBy")
   requisitionsReviewed Requisition[] @relation("RequisitionReviewedBy")
+  lotsReceived         DispatchLot[] @relation("LotReceivedBy")
 
   @@index([stationId])
   @@map("user")
@@ -188,8 +200,9 @@ model Location {
 }
 
 model Size {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
+  bagsPerAcre Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,7 +219,7 @@ model Generation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  dispatches Dispatch[]
+  dispatchSizeLines DispatchRequisitionSizeLine[]
 
   @@map("generation")
 }
@@ -230,7 +243,9 @@ model Requisition {
   acres                Decimal?          @db.Decimal(10, 2)
   initialQuantity      Decimal?          @db.Decimal(12, 2)
   fulfilledQuantity    Decimal           @default(0) @db.Decimal(12, 2)
+  fulfilledAcres       Decimal           @default(0) @db.Decimal(10, 2)
   status               RequisitionStatus @default(PENDING)
+  remarks              String?
   rejectionRemarks     String?
 
   farmerId  String
@@ -263,9 +278,10 @@ model Requisition {
 }
 
 model Dispatch {
-  id                   String    @id @default(cuid())
-  dispatchDate         DateTime? @db.Date
-  dateOfReceiving      DateTime? @db.Date
+  id                   String         @id @default(cuid())
+  status               DispatchStatus @default(OPEN)
+  dispatchDate         DateTime?      @db.Date
+  dateOfReceiving      DateTime?      @db.Date
   truckNumber          String?
   manualGatePassNumber String?
   weightSlipNumber     String?
@@ -276,8 +292,6 @@ model Dispatch {
   driverMobileNumber   String?
   remarks              String?
 
-  generationId String?
-  generation   Generation? @relation(fields: [generationId], references: [id], onDelete: Restrict)
   locationId   String?
   location     Location?   @relation("DispatchFromLocation", fields: [locationId], references: [id], onDelete: Restrict)
   toLocation   String?
@@ -288,8 +302,8 @@ model Dispatch {
   updatedAt DateTime @updatedAt
 
   @@index([dispatchDate])
-  @@index([generationId])
   @@index([locationId])
+  @@index([status])
   @@map("dispatch")
 }
 
@@ -301,11 +315,44 @@ model DispatchRequisition {
   requisition   Requisition @relation(fields: [requisitionId], references: [id], onDelete: Restrict)
 
   sizeLines DispatchRequisitionSizeLine[]
+  lot       DispatchLot?
 
   @@unique([dispatchId, requisitionId])
   @@index([dispatchId])
   @@index([requisitionId])
   @@map("dispatch_requisition")
+}
+
+model DispatchLot {
+  id                    String            @id @default(cuid())
+  dispatchRequisitionId String            @unique
+  dispatchRequisition   DispatchRequisition @relation(fields: [dispatchRequisitionId], references: [id], onDelete: Cascade)
+  status                DispatchLotStatus @default(PENDING)
+  receivedAt            DateTime?
+  receivedById          String?
+  receivedBy            User?             @relation("LotReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+  otpSentAt             DateTime?
+  otpVerifiedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([receivedById])
+  @@map("dispatch_lot")
+}
+
+model OtpChallenge {
+  id           String   @id @default(cuid())
+  purpose      String
+  referenceId  String
+  mobileNumber String
+  codeHash     String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([purpose, referenceId])
+  @@map("otp_challenge")
 }
 
 model DispatchRequisitionSizeLine {
@@ -314,9 +361,12 @@ model DispatchRequisitionSizeLine {
   dispatchRequisition   DispatchRequisition @relation(fields: [dispatchRequisitionId], references: [id], onDelete: Cascade)
   sizeId                String
   size                  Size                @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  generationId          String
+  generation            Generation          @relation(fields: [generationId], references: [id], onDelete: Restrict)
   quantity              Decimal             @db.Decimal(12, 2)
 
-  @@unique([dispatchRequisitionId, sizeId])
+  @@unique([dispatchRequisitionId, sizeId, generationId])
   @@index([sizeId])
+  @@index([generationId])
   @@map("dispatch_requisition_size_line")
 }

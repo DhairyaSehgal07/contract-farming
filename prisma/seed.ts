@@ -101,20 +101,20 @@ const VARIETIES = ["Himalini", "B101", "Jyoti"] as const;
 const GENERATIONS = ["G2", "G3", "Foundation", "Certified"] as const;
 
 const SIZES = [
-  "Below 25",
-  "25-30",
-  "Below 30",
-  "30-35",
-  "30-40",
-  "35-40",
-  "40-45",
-  "40-50",
-  "45-50",
-  "50-55",
-  "Above 50",
-  "Above 55",
-  "Cut",
-  "ungraded",
+  { name: "Below 25", bagsPerAcre: 21 },
+  { name: "25-30", bagsPerAcre: 35 },
+  { name: "Below 30", bagsPerAcre: 21 },
+  { name: "30-35", bagsPerAcre: 35 },
+  { name: "30-40", bagsPerAcre: 30 },
+  { name: "35-40", bagsPerAcre: 30 },
+  { name: "40-45", bagsPerAcre: 25 },
+  { name: "40-50", bagsPerAcre: 25 },
+  { name: "45-50", bagsPerAcre: 25 },
+  { name: "50-55", bagsPerAcre: 21 },
+  { name: "Above 50", bagsPerAcre: 21 },
+  { name: "Above 55", bagsPerAcre: 21 },
+  { name: "Cut", bagsPerAcre: 21 },
+  { name: "ungraded", bagsPerAcre: 21 },
 ] as const;
 
 const LOCATIONS = [
@@ -125,10 +125,8 @@ const LOCATIONS = [
 
 const SEED_IDS = {
   requisitionPending: "seed-requisition-001",
-  requisitionApprovedPartial: "seed-requisition-002",
-  requisitionPending2: "seed-requisition-003",
-  requisitionApprovedOpen: "seed-requisition-004",
-  dispatch: "seed-dispatch-001",
+  requisitionApproved: "seed-requisition-002",
+  requisitionRejected: "seed-requisition-003",
 } as const;
 
 const adapter = new PrismaPg({
@@ -137,6 +135,8 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function clearAllData() {
+  await prisma.otpChallenge.deleteMany();
+  await prisma.dispatchLot.deleteMany();
   await prisma.dispatchRequisitionSizeLine.deleteMany();
   await prisma.dispatchRequisition.deleteMany();
   await prisma.dispatch.deleteMany();
@@ -234,8 +234,8 @@ async function seedMasterData() {
     await prisma.generation.create({ data: { name } });
   }
 
-  for (const name of SIZES) {
-    await prisma.size.create({ data: { name } });
+  for (const size of SIZES) {
+    await prisma.size.create({ data: size });
   }
 
   for (const location of LOCATIONS) {
@@ -327,14 +327,12 @@ async function seedRequisitions({
   reviewedById,
   amandeepFarmerId,
   ajitFarmerId,
-  tirathFarmerId,
 }: {
   varietyId: string;
   createdById: string;
   reviewedById: string;
   amandeepFarmerId: string;
   ajitFarmerId: string;
-  tirathFarmerId: string;
 }) {
   await prisma.requisition.create({
     data: {
@@ -342,9 +340,11 @@ async function seedRequisitions({
       requisitionDate: new Date("2026-06-01"),
       requestedDeliveryDate: new Date("2026-06-15"),
       acres: 2.5,
-      initialQuantity: 100,
+      initialQuantity: null,
       fulfilledQuantity: 0,
+      fulfilledAcres: 0,
       status: RequisitionStatus.PENDING,
+      remarks: "Urgent delivery requested for early sowing",
       farmerId: amandeepFarmerId,
       varietyId,
       createdById,
@@ -353,14 +353,16 @@ async function seedRequisitions({
 
   await prisma.requisition.create({
     data: {
-      id: SEED_IDS.requisitionApprovedPartial,
+      id: SEED_IDS.requisitionApproved,
       requisitionDate: new Date("2026-06-02"),
       requestedDeliveryDate: new Date("2026-06-16"),
       approvedDeliveryDate: new Date("2026-06-12"),
-      acres: 3,
+      acres: null,
       initialQuantity: 100,
-      fulfilledQuantity: 40,
+      fulfilledQuantity: 0,
+      fulfilledAcres: 0,
       status: RequisitionStatus.APPROVED,
+      remarks: "Standard bag order for dispatch testing",
       farmerId: amandeepFarmerId,
       varietyId,
       createdById,
@@ -372,78 +374,22 @@ async function seedRequisitions({
 
   await prisma.requisition.create({
     data: {
-      id: SEED_IDS.requisitionPending2,
+      id: SEED_IDS.requisitionRejected,
       requisitionDate: new Date("2026-06-03"),
       requestedDeliveryDate: new Date("2026-06-18"),
       acres: 1.5,
-      initialQuantity: 60,
+      initialQuantity: null,
       fulfilledQuantity: 0,
-      status: RequisitionStatus.PENDING,
+      fulfilledAcres: 0,
+      status: RequisitionStatus.REJECTED,
+      remarks: "Requested for kharif season",
+      rejectionRemarks: "Insufficient acreage details provided",
+      rejectionDate: new Date("2026-06-09"),
       farmerId: ajitFarmerId,
       varietyId,
       createdById,
-    },
-  });
-
-  await prisma.requisition.create({
-    data: {
-      id: SEED_IDS.requisitionApprovedOpen,
-      requisitionDate: new Date("2026-06-04"),
-      requestedDeliveryDate: new Date("2026-06-20"),
-      approvedDeliveryDate: new Date("2026-06-14"),
-      acres: 2,
-      initialQuantity: 80,
-      fulfilledQuantity: 0,
-      status: RequisitionStatus.APPROVED,
-      farmerId: tirathFarmerId,
-      varietyId,
-      createdById,
       reviewedById,
-      reviewedAt: new Date("2026-06-11T10:00:00.000Z"),
-      approvalDate: new Date("2026-06-11"),
-    },
-  });
-}
-
-async function seedDispatch({
-  requisitionId,
-  generationId,
-  locationId,
-  sizeId,
-}: {
-  requisitionId: string;
-  generationId: string;
-  locationId: string;
-  sizeId: string;
-}) {
-  await prisma.dispatch.create({
-    data: {
-      id: SEED_IDS.dispatch,
-      dispatchDate: new Date("2026-06-12"),
-      dateOfReceiving: new Date("2026-06-13"),
-      truckNumber: "UP32AB1234",
-      manualGatePassNumber: "GP-1001",
-      weightSlipNumber: "12345",
-      grossWeight: 5200,
-      tareWeight: 1200,
-      netWeight: 4000,
-      averageWeightPerBag: 100,
-      driverMobileNumber: "9876501234",
-      remarks: "Seed dispatch for testing",
-      generationId,
-      locationId,
-      toLocation: "Puranpur Field",
-      requisitions: {
-        create: {
-          requisitionId,
-          sizeLines: {
-            create: {
-              sizeId,
-              quantity: 40,
-            },
-          },
-        },
-      },
+      reviewedAt: new Date("2026-06-09T10:00:00.000Z"),
     },
   });
 }
@@ -452,7 +398,7 @@ async function main() {
   console.log("Clearing all data…");
   await clearAllData();
 
-  const { bazpurStation, amandeepFarmer, ajitFarmer, tirathFarmer } =
+  const { bazpurStation, amandeepFarmer, ajitFarmer } =
     await seedGeography();
 
   console.log("Seeding users and permissions…");
@@ -464,15 +410,6 @@ async function main() {
 
   const variety = await prisma.variety.findUniqueOrThrow({
     where: { name: "Himalini" },
-  });
-  const generation = await prisma.generation.findUniqueOrThrow({
-    where: { name: "G2" },
-  });
-  const size = await prisma.size.findUniqueOrThrow({
-    where: { name: "25-30" },
-  });
-  const location = await prisma.location.findUniqueOrThrow({
-    where: { name: "Bazpur Cold Store" },
   });
   const fieldOfficer = await prisma.user.findUniqueOrThrow({
     where: { email: "field.officer@example.com" },
@@ -488,15 +425,6 @@ async function main() {
     reviewedById: programmeManager.id,
     amandeepFarmerId: amandeepFarmer.id,
     ajitFarmerId: ajitFarmer.id,
-    tirathFarmerId: tirathFarmer.id,
-  });
-
-  console.log("Seeding dispatches…");
-  await seedDispatch({
-    requisitionId: SEED_IDS.requisitionApprovedPartial,
-    generationId: generation.id,
-    locationId: location.id,
-    sizeId: size.id,
   });
 
   console.log("Seed complete:");
@@ -510,8 +438,7 @@ async function main() {
   console.log(
     "  2 stations (Bazpur, Kashipur), 3 localities, 3 farmers",
   );
-  console.log("  4 requisitions (2 pending, 2 approved)");
-  console.log("  1 dispatch (40 bags on partially fulfilled requisition)");
+  console.log("  3 requisitions (1 pending, 1 approved, 1 rejected)");
   console.log("  default role permissions seeded");
 }
 

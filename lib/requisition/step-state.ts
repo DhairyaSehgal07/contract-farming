@@ -1,5 +1,12 @@
 import type { RequisitionDetail } from "@/app/actions/requisition/requisitions";
 import { parseDateOnly } from "@/lib/date";
+import {
+  getOrderedAcres,
+  getOrderedBagQuantity,
+  getRemainingAcres,
+  isAcresBasedRequisition,
+  isBagsBasedRequisition,
+} from "@/lib/requisition/quantity";
 
 export type RequisitionStepStatus =
   | "complete"
@@ -30,16 +37,30 @@ function formatDateTime(value: string) {
 }
 
 function isFulfilled(detail: RequisitionDetail) {
-  const initial = detail.initialQuantity
-    ? Number.parseFloat(detail.initialQuantity)
-    : 0;
-  const fulfilled = Number.parseFloat(detail.fulfilledQuantity);
-
-  if (initial <= 0) {
-    return detail.dispatchAssignments.length > 0 && fulfilled > 0;
+  if (detail.status === "FULFILLED") {
+    return true;
   }
 
-  return fulfilled >= initial;
+  const fulfilled = Number.parseFloat(detail.fulfilledQuantity);
+
+  if (isBagsBasedRequisition(detail)) {
+    const initial = detail.initialQuantity
+      ? Number.parseFloat(detail.initialQuantity)
+      : 0;
+
+    if (initial <= 0) {
+      return detail.dispatchAssignments.length > 0 && fulfilled > 0;
+    }
+
+    return fulfilled >= initial;
+  }
+
+  if (isAcresBasedRequisition(detail)) {
+    const remainingAcres = getRemainingAcres(detail);
+    return remainingAcres !== null && remainingAcres <= 0;
+  }
+
+  return false;
 }
 
 function hasDispatches(detail: RequisitionDetail) {
@@ -55,7 +76,7 @@ function isPending(detail: RequisitionDetail) {
 }
 
 function isApproved(detail: RequisitionDetail) {
-  return detail.status === "APPROVED";
+  return detail.status === "APPROVED" || detail.status === "FULFILLED";
 }
 
 function getSubmittedStep(detail: RequisitionDetail): RequisitionStepState {
@@ -142,13 +163,17 @@ function getFulfilledStep(detail: RequisitionDetail): RequisitionStepState {
     };
   }
 
-  const initial = detail.initialQuantity ?? "—";
-  const fulfilled = detail.fulfilledQuantity;
+  const ordered = isAcresBasedRequisition(detail)
+    ? `${getOrderedAcres(detail) ?? "—"} acres`
+    : `${getOrderedBagQuantity(detail)?.toString() ?? detail.initialQuantity ?? "—"} bags`;
+  const fulfilled = isAcresBasedRequisition(detail)
+    ? `${detail.fulfilledAcres} acres (${detail.fulfilledQuantity} bags)`
+    : `${detail.fulfilledQuantity} bags`;
 
   if (isFulfilled(detail)) {
     return {
       title: "Fulfilled",
-      description: `${fulfilled} / ${initial} dispatched`,
+      description: `${fulfilled} / ${ordered} dispatched`,
       status: "complete",
     };
   }
@@ -156,7 +181,7 @@ function getFulfilledStep(detail: RequisitionDetail): RequisitionStepState {
   if (hasDispatches(detail)) {
     return {
       title: "Fulfilled",
-      description: `${fulfilled} / ${initial} dispatched`,
+      description: `${fulfilled} / ${ordered} dispatched`,
       status: "active",
     };
   }

@@ -1,5 +1,6 @@
 export type DispatchSizeLineDraft = {
   sizeId: string;
+  generationId: string;
   quantity: string;
 };
 

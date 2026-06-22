@@ -1,18 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  confirmLotReceipt,
   createDispatch,
   deleteDispatch,
+  sendLotReceiptOtp,
   updateDispatchStep2,
 } from "@/app/actions/dispatch/dispatches";
 import {
+  fetchDispatch,
   fetchDispatchableRequisitions,
   fetchDispatchFormOptions,
   fetchDispatches,
 } from "@/lib/query/dispatch-fetchers";
 import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
 import type {
+  ConfirmLotReceiptInput,
   CreateDispatchInput,
+  SendLotReceiptOtpInput,
   UpdateDispatchStep2Input,
 } from "@/lib/schemas/dispatch/dispatch";
 
@@ -20,6 +25,14 @@ export function useDispatches() {
   return useQuery({
     queryKey: dispatchKeys.list(),
     queryFn: fetchDispatches,
+  });
+}
+
+export function useDispatch(id: string) {
+  return useQuery({
+    queryKey: dispatchKeys.detail(id),
+    queryFn: () => fetchDispatch(id),
+    enabled: Boolean(id),
   });
 }
 
@@ -96,6 +109,47 @@ export function useDeleteDispatch() {
       void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
       toast.success("Dispatch deleted");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useSendLotReceiptOtp() {
+  return useMutation({
+    mutationFn: async (input: SendLotReceiptOtpInput) => {
+      const result = await sendLotReceiptOtp(input);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      toast.success(`OTP sent to ${data.mobileNumber}`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useConfirmLotReceipt(dispatchId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: ConfirmLotReceiptInput) => {
+      const result = await confirmLotReceipt(input);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(dispatchKeys.detail(dispatchId), data);
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
+      toast.success("Lot received");
     },
     onError: (error: Error) => {
       toast.error(error.message);

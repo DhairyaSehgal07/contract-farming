@@ -52,6 +52,7 @@ const updatedRequisition = {
   acres: null,
   initialQuantity: null,
   status: RequisitionStatus.APPROVED,
+  remarks: null,
   rejectionRemarks: null,
   farmerId: "farmer-1",
   varietyId: "variety-1",

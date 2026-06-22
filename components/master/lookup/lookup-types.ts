@@ -11,7 +11,7 @@ export type LookupRow = {
   updatedAt: Date;
 };
 
-export type LookupEntity = "variety" | "size" | "generation";
+export type LookupEntity = "variety" | "generation";
 
 export type LookupConfig = {
   entity: LookupEntity;

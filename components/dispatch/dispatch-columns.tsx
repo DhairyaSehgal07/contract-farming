@@ -2,8 +2,10 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import type { DispatchRow } from "@/app/actions/dispatch/dispatches";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,6 +34,10 @@ function formatRelationName(value: { name: string } | null) {
   return value?.name ?? "—";
 }
 
+function canModifyDispatch(row: DispatchRow) {
+  return row.status === "OPEN" && row.lotsReceived === 0;
+}
+
 type DispatchColumnActions = {
   canWrite: boolean;
   onEdit: (row: DispatchRow) => void;
@@ -47,12 +53,39 @@ export function createDispatchColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Dispatch date" />
       ),
-      cell: ({ row }) => formatDate(row.original.dispatchDate),
+      cell: ({ row }) => (
+        <Link
+          href={`/dispatch/${row.original.id}`}
+          className="font-medium hover:underline"
+        >
+          {formatDate(row.original.dispatchDate)}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === "CLOSED" ? "default" : "outline"}>
+          {row.original.status === "CLOSED" ? "Closed" : "Open"}
+        </Badge>
+      ),
+    },
+    {
+      id: "receiptProgress",
+      accessorFn: (row) => `${row.lotsReceived}/${row.lotsTotal}`,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Receipt progress" />
+      ),
+      cell: ({ row }) =>
+        `${row.original.lotsReceived} / ${row.original.lotsTotal} farmers`,
     },
     {
       accessorKey: "dateOfReceiving",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Receiving date" />
+        <DataTableColumnHeader column={column} title="Closed on" />
       ),
       cell: ({ row }) => formatDate(row.original.dateOfReceiving),
     },
@@ -70,14 +103,6 @@ export function createDispatchColumns(
         <DataTableColumnHeader column={column} title="To location" />
       ),
       cell: ({ row }) => row.original.toLocation ?? "—",
-    },
-    {
-      id: "generation",
-      accessorFn: (row) => row.generation?.name ?? "",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Generation" />
-      ),
-      cell: ({ row }) => formatRelationName(row.original.generation),
     },
     {
       accessorKey: "netWeight",
@@ -106,33 +131,40 @@ export function createDispatchColumns(
             id: "actions",
             enableSorting: false,
             enableHiding: false,
-            cell: ({ row }) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    disabled={!actions.canWrite}
-                    onClick={() => actions.onEdit(row.original)}
-                  >
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={!actions.canWrite}
-                    onClick={() => actions.onDelete(row.original)}
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ),
+            cell: ({ row }) => {
+              const modifiable = canModifyDispatch(row.original);
+
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dispatch/${row.original.id}`}>View</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={!actions.canWrite || !modifiable}
+                      onClick={() => actions.onEdit(row.original)}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={!actions.canWrite || !modifiable}
+                      onClick={() => actions.onDelete(row.original)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            },
           } satisfies ColumnDef<DispatchRow>,
         ]
       : []),

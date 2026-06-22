@@ -27,7 +27,8 @@ function isClientReady(client: PrismaClient) {
     typeof client.rolePermission?.findMany === "function" &&
     typeof client.location?.findMany === "function" &&
     typeof client.dispatch?.findMany === "function" &&
-    typeof client.dispatchRequisition?.findMany === "function"
+    typeof client.dispatchRequisition?.findMany === "function" &&
+    typeof client.dispatchLot?.findMany === "function"
   );
 }
 

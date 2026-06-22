@@ -6,6 +6,9 @@ import { MANAGING_DIRECTOR_ROLE } from "@/lib/auth/permission-catalog";
 import { getServerSession } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import {
+  getRemainingQuantityForRequisition,
+} from "@/lib/requisition/quantity";
+import {
   type ActionResult,
   actionError,
   actionSuccess,
@@ -42,12 +45,19 @@ const requisitionDetailInclude = {
     include: {
       dispatch: {
         include: {
-          generation: { select: { name: true } },
           location: { select: { name: true } },
         },
       },
       sizeLines: {
-        include: { size: { select: { name: true } } },
+        include: {
+          size: { select: { id: true, name: true, bagsPerAcre: true } },
+          generation: { select: { name: true } },
+        },
+      },
+      lot: {
+        include: {
+          receivedBy: { select: { name: true } },
+        },
       },
     },
     orderBy: { dispatch: { dispatchDate: "desc" } },
@@ -78,6 +88,7 @@ export type RequisitionRow = {
   acres: string | null;
   initialQuantity: string | null;
   status: RequisitionStatus;
+  remarks: string | null;
   rejectionRemarks: string | null;
   farmerId: string;
   varietyId: string;
@@ -110,6 +121,7 @@ export type RequisitionDispatchAssignment = {
   id: string;
   dispatch: {
     id: string;
+    status: "OPEN" | "CLOSED";
     dispatchDate: string | null;
     dateOfReceiving: string | null;
     truckNumber: string | null;
@@ -122,20 +134,27 @@ export type RequisitionDispatchAssignment = {
     driverMobileNumber: string | null;
     remarks: string | null;
     toLocation: string | null;
-    generation: { name: string } | null;
     location: { name: string } | null;
   };
+  lot: {
+    id: string;
+    status: "PENDING" | "RECEIVED";
+    receivedAt: string | null;
+    receivedBy: { name: string } | null;
+  } | null;
   sizeLines: Array<{
     id: string;
     quantity: string;
     size: { name: string };
+    generation: { name: string };
   }>;
 };
 
 export type RequisitionDetail = RequisitionRow & {
   approvedDeliveryDate: string | null;
   fulfilledQuantity: string;
-  remainingQuantity: string;
+  fulfilledAcres: string;
+  remainingQuantity: string | null;
   dispatchAssignments: RequisitionDispatchAssignment[];
 };
 
@@ -147,6 +166,7 @@ function serializeRequisition(row: RequisitionWithRelations): RequisitionRow {
     acres: row.acres?.toString() ?? null,
     initialQuantity: row.initialQuantity?.toString() ?? null,
     status: row.status,
+    remarks: row.remarks,
     rejectionRemarks: row.rejectionRemarks,
     farmerId: row.farmerId,
     varietyId: row.varietyId,
@@ -175,6 +195,7 @@ function serializeDispatchAssignment(
     id: assignment.id,
     dispatch: {
       id: dispatch.id,
+      status: dispatch.status,
       dispatchDate: dispatch.dispatchDate?.toISOString().slice(0, 10) ?? null,
       dateOfReceiving:
         dispatch.dateOfReceiving?.toISOString().slice(0, 10) ?? null,
@@ -188,13 +209,21 @@ function serializeDispatchAssignment(
       driverMobileNumber: dispatch.driverMobileNumber,
       remarks: dispatch.remarks,
       toLocation: dispatch.toLocation,
-      generation: dispatch.generation,
       location: dispatch.location,
     },
+    lot: assignment.lot
+      ? {
+          id: assignment.lot.id,
+          status: assignment.lot.status,
+          receivedAt: assignment.lot.receivedAt?.toISOString() ?? null,
+          receivedBy: assignment.lot.receivedBy,
+        }
+      : null,
     sizeLines: sizeLines.map((line) => ({
       id: line.id,
       quantity: line.quantity.toString(),
       size: line.size,
+      generation: line.generation,
     })),
   };
 }
@@ -202,18 +231,21 @@ function serializeDispatchAssignment(
 function serializeRequisitionDetail(
   row: RequisitionDetailWithRelations,
 ): RequisitionDetail {
-  const initial = row.initialQuantity
-    ? Number.parseFloat(row.initialQuantity.toString())
-    : 0;
-  const fulfilled = Number.parseFloat(row.fulfilledQuantity.toString());
-  const remaining = Math.max(0, initial - fulfilled);
+  const requisitionFields = {
+    acres: row.acres?.toString() ?? null,
+    initialQuantity: row.initialQuantity?.toString() ?? null,
+    fulfilledQuantity: row.fulfilledQuantity.toString(),
+    fulfilledAcres: row.fulfilledAcres.toString(),
+  };
+  const remainingQuantity = getRemainingQuantityForRequisition(requisitionFields);
 
   return {
     ...serializeRequisition(row),
     approvedDeliveryDate:
       row.approvedDeliveryDate?.toISOString().slice(0, 10) ?? null,
     fulfilledQuantity: row.fulfilledQuantity.toString(),
-    remainingQuantity: remaining.toString(),
+    fulfilledAcres: row.fulfilledAcres.toString(),
+    remainingQuantity,
     dispatchAssignments: row.dispatchAssignments.map(serializeDispatchAssignment),
   };
 }
@@ -380,6 +412,7 @@ export async function createRequisition(
         fulfilledQuantity: 0,
         farmerId: data.farmerId,
         varietyId: data.varietyId,
+        remarks: data.remarks ?? null,
         createdById: session.user.id,
         status: RequisitionStatus.PENDING,
       },
@@ -421,6 +454,7 @@ export async function updateRequisition(
         initialQuantity: rest.quantity ?? null,
         farmerId: rest.farmerId,
         varietyId: rest.varietyId,
+        remarks: rest.remarks ?? null,
       },
       include: requisitionInclude,
     });

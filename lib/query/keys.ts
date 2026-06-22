@@ -27,6 +27,7 @@ export const requisitionKeys = {
 export const dispatchKeys = {
   all: ["dispatch"] as const,
   list: () => [...dispatchKeys.all, "list"] as const,
+  detail: (id: string) => [...dispatchKeys.all, "detail", id] as const,
   dispatchableRequisitions: () =>
     [...dispatchKeys.all, "dispatchable-requisitions"] as const,
   formOptions: () => [...dispatchKeys.all, "form-options"] as const,

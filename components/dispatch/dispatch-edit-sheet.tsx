@@ -43,7 +43,6 @@ type DispatchEditSheetProps = {
 
 const emptyValues: DispatchStep2Input = {
   dispatchDate: "",
-  generationId: "",
   locationId: "",
   toLocation: "",
   truckNumber: "",
@@ -66,7 +65,6 @@ function toFormValues(dispatch: DispatchRow | null): DispatchStep2Input {
 
   return {
     dispatchDate: dispatch.dispatchDate ?? "",
-    generationId: dispatch.generationId ?? "",
     locationId: dispatch.locationId ?? "",
     toLocation: dispatch.toLocation ?? "",
     truckNumber: dispatch.truckNumber ?? "",
@@ -90,17 +88,7 @@ export function DispatchEditSheet({
 }: DispatchEditSheetProps) {
   const portalContainerRef = useRef<HTMLDivElement>(null);
   const { data: formOptions } = useDispatchFormOptions();
-  const generations = formOptions?.generations ?? [];
   const locations = formOptions?.locations ?? [];
-
-  const generationOptions = useMemo<ComboboxOption[]>(
-    () =>
-      generations.map((generation) => ({
-        id: generation.id,
-        label: generation.name,
-      })),
-    [generations],
-  );
 
   const locationOptions = useMemo<ComboboxOption[]>(
     () =>
@@ -196,34 +184,6 @@ export function DispatchEditSheet({
                         }
                         aria-invalid={isInvalid}
                         className="uppercase"
-                      />
-                      {isInvalid ? (
-                        <FieldError errors={field.state.meta.errors} />
-                      ) : null}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="generationId">
-                {(field) => {
-                  const isInvalid = isFieldInvalid(field.state.meta);
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor="edit-dispatch-generation">
-                        Generation
-                      </FieldLabel>
-                      <SearchableComboboxField
-                        id="edit-dispatch-generation"
-                        name={field.name}
-                        value={field.state.value}
-                        onValueChange={field.handleChange}
-                        onBlur={field.handleBlur}
-                        isInvalid={isInvalid}
-                        placeholder="Search generations…"
-                        emptyMessage="No generations found."
-                        options={generationOptions}
-                        portalContainer={portalContainerRef}
                       />
                       {isInvalid ? (
                         <FieldError errors={field.state.meta.errors} />

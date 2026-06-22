@@ -33,6 +33,14 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useDispatchFormOptions } from "@/hooks/dispatch/use-dispatches";
 import { parseDateOnly } from "@/lib/date";
@@ -48,7 +56,6 @@ type DispatchDetailsFormValues = Omit<
 
 const emptyValues: DispatchDetailsFormValues = {
   dispatchDate: "",
-  generationId: "",
   locationId: "",
   toLocation: "",
   truckNumber: "",
@@ -84,6 +91,13 @@ function formatWeightValue(value: number) {
   return value.toFixed(2).replace(/\.?0+$/, "");
 }
 
+function formatSizeLabel(name: string) {
+  if (/\(mm\)/i.test(name)) {
+    return name;
+  }
+  return `${name} (mm)`;
+}
+
 export function DispatchDetailsStep({
   selections,
   requisitions,
@@ -93,9 +107,9 @@ export function DispatchDetailsStep({
 }: DispatchDetailsStepProps) {
   const portalContainerRef = useRef<HTMLDivElement>(null);
   const { data: formOptions } = useDispatchFormOptions();
-  const generations = formOptions?.generations ?? [];
   const locations = formOptions?.locations ?? [];
   const sizes = formOptions?.sizes ?? [];
+  const generations = formOptions?.generations ?? [];
 
   const sizeNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -104,6 +118,14 @@ export function DispatchDetailsStep({
     }
     return map;
   }, [sizes]);
+
+  const generationNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const generation of generations) {
+      map.set(generation.id, generation.name);
+    }
+    return map;
+  }, [generations]);
 
   const requisitionById = useMemo(() => {
     const map = new Map<string, DispatchableRequisitionRow>();
@@ -125,15 +147,6 @@ export function DispatchDetailsStep({
   const totalBags = useMemo(
     () => summaryRows.reduce((sum, row) => sum + row.total, 0),
     [summaryRows],
-  );
-
-  const generationOptions = useMemo<ComboboxOption[]>(
-    () =>
-      generations.map((generation) => ({
-        id: generation.id,
-        label: generation.name,
-      })),
-    [generations],
   );
 
   const locationOptions = useMemo<ComboboxOption[]>(
@@ -204,50 +217,71 @@ export function DispatchDetailsStep({
               <FieldDescription>
                 Review graded bag counts before entering dispatch details.
               </FieldDescription>
-              <div className="mt-5 overflow-x-auto rounded-md border">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/40 text-left">
-                      <th className="px-4 py-3 font-medium">Farmer</th>
-                      <th className="px-4 py-3 font-medium">Variety</th>
-                      <th className="px-4 py-3 font-medium">Sizes</th>
-                      <th className="px-4 py-3 text-right font-medium">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {summaryRows.map((row) => (
-                      <tr
-                        key={row.requisitionId}
-                        className="border-b last:border-b-0"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="font-medium">
-                            {row.requisition?.farmer.name ?? "—"}
-                          </div>
-                          <div className="text-muted-foreground">
-                            #{row.requisition?.farmer.accountNumber ?? "—"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.requisition?.variety.name ?? "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col gap-0.5">
-                            {row.sizeLines.map((line) => (
-                              <span key={line.sizeId}>
-                                {sizeNameById.get(line.sizeId) ?? "Size"}:{" "}
-                                {line.quantity}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">{row.total}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-5 rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead className="text-center">Farmer</TableHead>
+                      <TableHead className="text-center">Variety</TableHead>
+                      <TableHead className="text-center">Generation</TableHead>
+                      <TableHead className="text-center">Size</TableHead>
+                      <TableHead className="text-center">Bags</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {summaryRows.flatMap((row) =>
+                      row.sizeLines.map((line, lineIndex) => (
+                        <TableRow
+                          key={`${row.requisitionId}-${line.sizeId}-${line.generationId}`}
+                        >
+                          {lineIndex === 0 ? (
+                            <>
+                              <TableCell
+                                className="text-center whitespace-normal"
+                                rowSpan={row.sizeLines.length}
+                              >
+                                <span className="font-medium">
+                                  {row.requisition?.farmer.name ?? "—"}
+                                </span>{" "}
+                                <span className="text-muted-foreground">
+                                  #
+                                  {row.requisition?.farmer.accountNumber ??
+                                    "—"}
+                                </span>
+                              </TableCell>
+                              <TableCell
+                                className="text-center"
+                                rowSpan={row.sizeLines.length}
+                              >
+                                {row.requisition?.variety.name ?? "—"}
+                              </TableCell>
+                            </>
+                          ) : null}
+                          <TableCell className="text-center">
+                            {generationNameById.get(line.generationId) ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {formatSizeLabel(
+                              sizeNameById.get(line.sizeId) ?? "—",
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center tabular-nums">
+                            {line.quantity}
+                          </TableCell>
+                          {lineIndex === 0 ? (
+                            <TableCell
+                              className="text-center font-medium tabular-nums"
+                              rowSpan={row.sizeLines.length}
+                            >
+                              {row.total}
+                            </TableCell>
+                          ) : null}
+                        </TableRow>
+                      )),
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </FieldSet>
 
@@ -385,41 +419,12 @@ export function DispatchDetailsStep({
 
             <FieldSet>
               <FieldLegend className="text-lg font-semibold">
-                Location and generation
+                Location
               </FieldLegend>
               <FieldDescription>
-                Generation and source or destination locations for this
-                dispatch.
+                Source and destination locations for this dispatch.
               </FieldDescription>
               <FieldGroup className="mt-5 grid grid-cols-1 gap-6 @md/field-group:grid-cols-2">
-                <form.Field name="generationId">
-                  {(field) => {
-                    const isInvalid = isFieldInvalid(field.state.meta);
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="dispatch-generation">
-                          Generation
-                        </FieldLabel>
-                        <SearchableComboboxField
-                          id="dispatch-generation"
-                          name={field.name}
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          onBlur={field.handleBlur}
-                          isInvalid={isInvalid}
-                          placeholder="Search generations…"
-                          emptyMessage="No generations found."
-                          options={generationOptions}
-                          portalContainer={portalContainerRef}
-                        />
-                        {isInvalid ? (
-                          <FieldError errors={field.state.meta.errors} />
-                        ) : null}
-                      </Field>
-                    );
-                  }}
-                </form.Field>
-
                 <form.Field name="locationId">
                   {(field) => {
                     const isInvalid = isFieldInvalid(field.state.meta);

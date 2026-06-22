@@ -16,14 +16,49 @@ const requiredDate = z
   .min(1, "Date is required")
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date");
 
-export const requisitionFormSchema = z.object({
-  farmerId: z.string().min(1, "Farmer is required"),
-  varietyId: z.string().min(1, "Variety is required"),
-  requisitionDate: requiredDate,
-  requestedDeliveryDate: requiredDate,
-  acres: optionalDecimal,
-  quantity: optionalDecimal,
-});
+const optionalString = z.string().trim().optional().or(z.literal(""));
+
+export const requisitionFormSchema = z
+  .object({
+    farmerId: z.string().min(1, "Farmer is required"),
+    varietyId: z.string().min(1, "Variety is required"),
+    requisitionDate: requiredDate,
+    requestedDeliveryDate: requiredDate,
+    acres: optionalDecimal,
+    quantity: optionalDecimal,
+    remarks: optionalString,
+  })
+  .superRefine((data, ctx) => {
+    const hasAcres = Boolean(data.acres?.trim());
+    const hasBags = Boolean(data.quantity?.trim());
+
+    if (hasAcres && hasBags) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter either acres or bags, not both.",
+        path: ["acres"],
+      });
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter either acres or bags, not both.",
+        path: ["quantity"],
+      });
+      return;
+    }
+
+    if (!hasAcres && !hasBags) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter either acres or bags.",
+        path: ["acres"],
+      });
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter either acres or bags.",
+        path: ["quantity"],
+      });
+    }
+  });
 
 export const createRequisitionSchema = requisitionFormSchema;
 export const updateRequisitionSchema = requisitionFormSchema.extend({
@@ -58,9 +93,13 @@ function emptyToUndefined(value: string | undefined) {
 export function normalizeRequisitionInput<T extends RequisitionFormInput>(
   input: T,
 ) {
+  const hasAcres = Boolean(input.acres?.trim());
+  const hasBags = Boolean(input.quantity?.trim());
+
   return {
     ...input,
-    acres: emptyToUndefined(input.acres),
-    quantity: emptyToUndefined(input.quantity),
+    acres: hasAcres ? emptyToUndefined(input.acres) : undefined,
+    quantity: hasBags ? emptyToUndefined(input.quantity) : undefined,
+    remarks: emptyToUndefined(input.remarks),
   };
 }

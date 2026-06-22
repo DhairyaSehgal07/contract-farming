@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { DispatchableRequisitionRow } from "@/app/actions/dispatch/dispatches";
 import { DispatchRequisitionQuantityDrawer } from "@/components/dispatch/dispatch-requisition-quantity-drawer";
+import { RequisitionRemarksDisplay } from "@/components/requisition/requisition-remarks-display";
 import {
   type DispatchRequisitionSelectionMap,
   type DispatchSizeLineDraft,
@@ -54,6 +55,7 @@ export function DispatchRequisitionSelectionStep({
   } = useDispatchableRequisitions();
   const { data: formOptions } = useDispatchFormOptions();
   const sizes = formOptions?.sizes ?? [];
+  const generations = formOptions?.generations ?? [];
 
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -69,6 +71,7 @@ export function DispatchRequisitionSelectionStep({
         row.farmer.name,
         row.farmer.accountNumber,
         row.variety.name,
+        row.remarks,
       ]
         .join(" ")
         .toLowerCase();
@@ -110,8 +113,8 @@ export function DispatchRequisitionSelectionStep({
       <div className="flex flex-col gap-2">
         <h3 className="font-heading text-lg font-medium">Select requisitions</h3>
         <p className="text-sm text-muted-foreground">
-          Click a requisition to enter graded bag counts. Only approved
-          requisitions with remaining quantity are shown.
+          Click a requisition to enter graded bag counts. Approved requisitions
+          with remaining quantity are shown.
         </p>
       </div>
 
@@ -127,7 +130,7 @@ export function DispatchRequisitionSelectionStep({
         <p className="text-sm text-destructive">{error.message}</p>
       ) : filteredRequisitions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No dispatchable requisitions found.
+          No approved requisitions pending dispatch.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -166,8 +169,18 @@ export function DispatchRequisitionSelectionStep({
                       Req. {formatDate(requisition.requisitionDate)}
                     </span>
                     <span className="text-muted-foreground">
-                      Remaining: {requisition.remainingQuantity} bags
+                      {requisition.orderBasis === "acres"
+                        ? requisition.remainingQuantity
+                          ? `${requisition.remainingQuantity} acres remaining`
+                          : `${requisition.acres} acres`
+                        : `${requisition.remainingQuantity} bags remaining`}
                     </span>
+                    {requisition.remarks ? (
+                      <RequisitionRemarksDisplay
+                        remarks={requisition.remarks}
+                        variant="inline"
+                      />
+                    ) : null}
                   </CardContent>
                 </Card>
               </button>
@@ -190,6 +203,7 @@ export function DispatchRequisitionSelectionStep({
         onOpenChange={setDrawerOpen}
         requisition={activeRequisition}
         sizes={sizes}
+        generations={generations}
         initialSizeLines={
           activeRequisition ? (selections.get(activeRequisition.id) ?? []) : []
         }

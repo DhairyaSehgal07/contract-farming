@@ -1,7 +1,10 @@
 import {
+  confirmLotReceipt,
+  getDispatch,
   listDispatchableRequisitions,
   listDispatchFormOptions,
   listDispatches,
+  sendLotReceiptOtp,
 } from "@/app/actions/dispatch/dispatches";
 
 async function unwrap<T>(
@@ -20,6 +23,10 @@ export async function fetchDispatches() {
   return unwrap(listDispatches());
 }
 
+export async function fetchDispatch(id: string) {
+  return unwrap(getDispatch(id));
+}
+
 export async function fetchDispatchableRequisitions() {
   return unwrap(listDispatchableRequisitions());
 }
@@ -27,3 +34,5 @@ export async function fetchDispatchableRequisitions() {
 export async function fetchDispatchFormOptions() {
   return unwrap(listDispatchFormOptions());
 }
+
+export { sendLotReceiptOtp, confirmLotReceipt };

@@ -11,10 +11,12 @@ import { parseDateOnly } from "@/lib/date";
 
 function statusVariant(
   status: RequisitionStatus,
-): "default" | "destructive" | "outline" {
+): "default" | "destructive" | "outline" | "secondary" {
   switch (status) {
     case "APPROVED":
       return "default";
+    case "FULFILLED":
+      return "secondary";
     case "REJECTED":
       return "destructive";
     default:
@@ -26,6 +28,8 @@ function statusLabel(status: RequisitionStatus) {
   switch (status) {
     case "APPROVED":
       return "Approved";
+    case "FULFILLED":
+      return "Fulfilled";
     case "REJECTED":
       return "Rejected";
     default:

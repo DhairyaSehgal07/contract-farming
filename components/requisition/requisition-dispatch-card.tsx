@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -14,7 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { parseDateOnly } from "@/lib/date";
+import { formatDisplayDate, parseDateOnly } from "@/lib/date";
+import Link from "next/link";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -55,21 +57,51 @@ export function RequisitionDispatchCard({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>
-          Dispatch {formatDate(dispatch.dispatchDate)}
-        </CardTitle>
-        <CardDescription>{formatRoute(assignment)}</CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <CardTitle>
+              <Link href={`/dispatch/${dispatch.id}`} className="hover:underline">
+                Dispatch {formatDate(dispatch.dispatchDate)}
+              </Link>
+            </CardTitle>
+            <CardDescription>{formatRoute(assignment)}</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant={dispatch.status === "CLOSED" ? "default" : "outline"}>
+              {dispatch.status === "CLOSED" ? "Closed" : "Open"}
+            </Badge>
+            {assignment.lot ? (
+              <Badge
+                variant={
+                  assignment.lot.status === "RECEIVED" ? "default" : "outline"
+                }
+              >
+                {assignment.lot.status === "RECEIVED"
+                  ? "Received"
+                  : "Receipt pending"}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col gap-0.5">
-            <dt className="text-muted-foreground">Receiving date</dt>
+            <dt className="text-muted-foreground">Closed on</dt>
             <dd>{formatDate(dispatch.dateOfReceiving)}</dd>
           </div>
-          <div className="flex flex-col gap-0.5">
-            <dt className="text-muted-foreground">Generation</dt>
-            <dd>{dispatch.generation?.name ?? "—"}</dd>
-          </div>
+          {assignment.lot?.receivedAt ? (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-muted-foreground">Farmer received on</dt>
+              <dd>{formatDisplayDate(assignment.lot.receivedAt)}</dd>
+            </div>
+          ) : null}
+          {assignment.lot?.receivedBy ? (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-muted-foreground">Received by</dt>
+              <dd>{assignment.lot.receivedBy.name}</dd>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-0.5">
             <dt className="text-muted-foreground">Truck number</dt>
             <dd>{dispatch.truckNumber ?? "—"}</dd>
@@ -102,6 +134,7 @@ export function RequisitionDispatchCard({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Generation</TableHead>
                   <TableHead>Size</TableHead>
                   <TableHead className="text-right">Quantity</TableHead>
                 </TableRow>
@@ -109,6 +142,7 @@ export function RequisitionDispatchCard({
               <TableBody>
                 {assignment.sizeLines.map((line) => (
                   <TableRow key={line.id}>
+                    <TableCell>{line.generation.name}</TableCell>
                     <TableCell>{line.size.name}</TableCell>
                     <TableCell className="text-right">{line.quantity}</TableCell>
                   </TableRow>

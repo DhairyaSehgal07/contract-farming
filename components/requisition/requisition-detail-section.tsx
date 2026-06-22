@@ -3,12 +3,13 @@
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { RequisitionDetail } from "@/app/actions/requisition/requisitions";
 import { DeleteConfirmDialog } from "@/components/master/delete-confirm-dialog";
 import { RequisitionApproveDialog } from "@/components/requisition/requisition-approve-dialog";
 import { RequisitionDispatchCard } from "@/components/requisition/requisition-dispatch-card";
 import { RequisitionFormSheet } from "@/components/requisition/requisition-form-sheet";
+import { RequisitionRemarksDisplay } from "@/components/requisition/requisition-remarks-display";
 import { RequisitionProgressStepper } from "@/components/requisition/requisition-progress-stepper";
 import { RequisitionRejectDialog } from "@/components/requisition/requisition-reject-dialog";
 import { RequisitionStatusBadge } from "@/components/requisition/requisition-status-badge";
@@ -37,6 +38,12 @@ import {
   useRequisition,
   useUpdateRequisition,
 } from "@/hooks/requisition/use-requisitions";
+import {
+  getFulfillmentPercent,
+  getOrderedAcres,
+  getOrderedBagQuantity,
+  isAcresBasedRequisition,
+} from "@/lib/requisition/quantity";
 import { parseDateOnly } from "@/lib/date";
 import { formatRequisitionHeaderDate } from "@/lib/requisition/step-state";
 import type { RequisitionFormInput } from "@/lib/schemas/requisition/requisition";
@@ -72,17 +79,14 @@ function formatDecimal(value: string | null) {
   return value ?? "—";
 }
 
-function fulfillmentPercent(detail: RequisitionDetail) {
-  const initial = detail.initialQuantity
-    ? Number.parseFloat(detail.initialQuantity)
-    : 0;
-  const fulfilled = Number.parseFloat(detail.fulfilledQuantity);
-
-  if (initial <= 0) {
-    return fulfilled > 0 ? 100 : 0;
+function formatOrderedQuantity(data: RequisitionDetail) {
+  if (isAcresBasedRequisition(data)) {
+    const orderedAcres = getOrderedAcres(data);
+    return orderedAcres !== null ? `${orderedAcres} acres` : null;
   }
 
-  return Math.min(100, Math.round((fulfilled / initial) * 100));
+  const ordered = getOrderedBagQuantity(data);
+  return ordered !== null ? `${ordered} bags` : null;
 }
 
 function DetailField({
@@ -90,7 +94,7 @@ function DetailField({
   value,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -136,6 +140,8 @@ function RequisitionDetailContent({
   const isPendingStatus = data.status === "PENDING";
   const showApprovalActions = canApprove && isPendingStatus;
   const showWriteActions = canWrite && isPendingStatus;
+  const orderedQuantity = formatOrderedQuantity(data);
+  const fulfillmentPercent = getFulfillmentPercent(data);
 
   function handleFormSubmit(values: RequisitionFormInput) {
     updateMutation.mutate(
@@ -288,10 +294,16 @@ function RequisitionDetailContent({
                   }
                 />
                 <DetailField label="Acres" value={formatDecimal(data.acres)} />
-                <DetailField
-                  label="Initial quantity"
-                  value={formatDecimal(data.initialQuantity)}
-                />
+                <DetailField label="Bags" value={formatDecimal(data.initialQuantity)} />
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <dt className="text-muted-foreground">Remarks</dt>
+                  <dd>
+                    <RequisitionRemarksDisplay
+                      remarks={data.remarks}
+                      variant="detail"
+                    />
+                  </dd>
+                </div>
                 <DetailField
                   label="Created by"
                   value={`${data.createdBy.name} on ${formatDateTime(data.createdAt)}`}
@@ -334,19 +346,38 @@ function RequisitionDetailContent({
             <CardContent className="flex flex-col gap-4">
               <div className="flex items-end justify-between gap-4">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-2xl font-medium">
-                    {data.fulfilledQuantity}
-                    {data.initialQuantity ? ` / ${data.initialQuantity}` : ""}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {data.remainingQuantity} remaining
-                  </span>
+                  {isAcresBasedRequisition(data) ? (
+                    <>
+                      <span className="text-2xl font-medium">
+                        {data.fulfilledAcres}
+                        {data.acres ? ` / ${data.acres}` : ""} acres
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {data.fulfilledQuantity} bags dispatched across lots
+                        {data.remainingQuantity
+                          ? ` · ${data.remainingQuantity} acres remaining`
+                          : ""}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-medium">
+                        {data.fulfilledQuantity}
+                        {orderedQuantity ? ` / ${orderedQuantity}` : ""}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {data.remainingQuantity
+                          ? `${data.remainingQuantity} bags remaining`
+                          : "—"}
+                      </span>
+                    </>
+                  )}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {fulfillmentPercent(data)}%
+                  {fulfillmentPercent}%
                 </span>
               </div>
-              <Progress value={fulfillmentPercent(data)} />
+              <Progress value={fulfillmentPercent} />
             </CardContent>
           </Card>
 

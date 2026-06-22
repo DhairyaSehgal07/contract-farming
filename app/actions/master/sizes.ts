@@ -10,17 +10,20 @@ import {
   requireMasterReadAction,
   requireMasterWriteAction,
 } from "@/lib/schemas/master/auth";
-import {
-  type CreateLookupInput,
-  createLookupSchema,
-  type UpdateLookupInput,
-  updateLookupSchema,
-} from "@/lib/schemas/master/lookup";
 import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
+import {
+  type CreateSizeInput,
+  createSizeSchema,
+  type UpdateSizeInput,
+  toSizeCreateData,
+  toSizeUpdateData,
+  updateSizeSchema,
+} from "@/lib/schemas/master/size";
 
 export type SizeRow = {
   id: string;
   name: string;
+  bagsPerAcre: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -39,18 +42,20 @@ export async function listSizes(): Promise<ActionResult<SizeRow[]>> {
 }
 
 export async function createSize(
-  input: CreateLookupInput,
+  input: CreateSizeInput,
 ): Promise<ActionResult<SizeRow>> {
   const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
-  const parsed = createLookupSchema.safeParse(input);
+  const parsed = createSizeSchema.safeParse(input);
   if (!parsed.success) {
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
   try {
-    const data = await prisma.size.create({ data: parsed.data });
+    const data = await prisma.size.create({
+      data: toSizeCreateData(parsed.data),
+    });
     return actionSuccess(data);
   } catch (error) {
     return actionError(getPrismaErrorMessage(error, "size"));
@@ -58,22 +63,24 @@ export async function createSize(
 }
 
 export async function updateSize(
-  input: UpdateLookupInput,
+  input: UpdateSizeInput,
 ): Promise<ActionResult<SizeRow>> {
   const authError = await requireMasterWriteAction();
   if (authError) return authError;
 
-  const parsed = updateLookupSchema.safeParse(input);
+  const parsed = updateSizeSchema.safeParse(input);
   if (!parsed.success) {
     return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const { id, ...data } = toSizeUpdateData(parsed.data);
+
   try {
-    const data = await prisma.size.update({
-      where: { id: parsed.data.id },
-      data: { name: parsed.data.name },
+    const updated = await prisma.size.update({
+      where: { id },
+      data,
     });
-    return actionSuccess(data);
+    return actionSuccess(updated);
   } catch (error) {
     return actionError(getPrismaErrorMessage(error, "size"));
   }

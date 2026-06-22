@@ -52,6 +52,7 @@ const optionalIntegerString = z
 
 export const dispatchSizeLineSchema = z.object({
   sizeId: z.string().min(1, "Size is required"),
+  generationId: z.string().min(1, "Generation is required"),
   quantity: requiredPositiveDecimal,
 });
 
@@ -68,7 +69,6 @@ export const createDispatchSchema = z.object({
     .min(1, "Select at least one requisition"),
   dispatchDate: requiredDate,
   dateOfReceiving: optionalDate,
-  generationId: z.string().min(1, "Generation is required"),
   locationId: optionalId,
   toLocation: optionalString,
   truckNumber: z
@@ -95,6 +95,20 @@ export const updateDispatchStep2Schema = dispatchStep2Schema.extend({
   id: z.string().min(1, "Dispatch is required"),
 });
 
+export const confirmLotReceiptSchema = z.object({
+  lotId: z.string().min(1, "Lot is required"),
+  otp: z
+    .string()
+    .trim()
+    .min(6, "Enter the 6-digit OTP")
+    .max(6, "Enter the 6-digit OTP")
+    .regex(/^\d{6}$/, "Enter a valid 6-digit OTP"),
+});
+
+export const sendLotReceiptOtpSchema = z.object({
+  lotId: z.string().min(1, "Lot is required"),
+});
+
 export type DispatchSizeLineInput = z.infer<typeof dispatchSizeLineSchema>;
 export type DispatchRequisitionSelectionInput = z.infer<
   typeof dispatchRequisitionSelectionSchema
@@ -102,6 +116,8 @@ export type DispatchRequisitionSelectionInput = z.infer<
 export type CreateDispatchInput = z.infer<typeof createDispatchSchema>;
 export type DispatchStep2Input = z.infer<typeof dispatchStep2Schema>;
 export type UpdateDispatchStep2Input = z.infer<typeof updateDispatchStep2Schema>;
+export type ConfirmLotReceiptInput = z.infer<typeof confirmLotReceiptSchema>;
+export type SendLotReceiptOtpInput = z.infer<typeof sendLotReceiptOtpSchema>;
 
 function emptyToUndefined(value: string | undefined) {
   return value?.trim() ? value.trim() : undefined;
@@ -131,6 +147,7 @@ export function normalizeCreateDispatchInput(input: CreateDispatchInput) {
       requisitionId: selection.requisitionId,
       sizeLines: selection.sizeLines.map((line) => ({
         sizeId: line.sizeId,
+        generationId: line.generationId,
         quantity: Number.parseFloat(line.quantity),
       })),
     })),
