@@ -35,7 +35,7 @@ const SEED_USERS = [
   },
   {
     email: "accounts.seeds@example.com",
-    name: "Harsh",
+    name: "Ashok",
     role: Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER,
   },
   {
@@ -90,9 +90,13 @@ const DEFAULT_ROLE_PERMISSIONS: Record<
     ...REQUISITION_ACCESS,
     ...DISPATCH_ACCESS,
   ],
-  [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [...DASHBOARD_READ],
+  [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [
+    ...DASHBOARD_READ,
+    ...REQUISITION_ACCESS,
+    ...DISPATCH_ACCESS,
+  ],
   [Role.LOGISTICS_EXECUTIVE]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
-  [Role.FIELD_OFFICER]: [...DASHBOARD_READ],
+  [Role.FIELD_OFFICER]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
   [Role.USER]: [...DASHBOARD_READ],
 };
 

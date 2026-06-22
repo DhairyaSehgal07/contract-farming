@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { NavVisibility } from "@/components/layout/dashboard-shell";
 import { isPathActive, navItems } from "@/components/layout/nav-config";
 import {
   Sidebar,
@@ -19,13 +18,14 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({
-  navVisibility,
+  visibleNavHrefs,
 }: {
-  navVisibility: NavVisibility;
+  visibleNavHrefs: string[];
 }) {
   const pathname = usePathname();
-  const visibleNavItems = navItems.filter(
-    (item) => navVisibility[item.href] !== false,
+  const visibleNavHrefSet = new Set(visibleNavHrefs);
+  const visibleNavItems = navItems.filter((item) =>
+    visibleNavHrefSet.has(item.href),
   );
 
   return (

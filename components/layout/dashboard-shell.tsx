@@ -11,21 +11,19 @@ type DashboardUser = {
   image?: string | null;
 };
 
-export type NavVisibility = Record<string, boolean>;
-
 export function DashboardShell({
   user,
-  navVisibility,
+  visibleNavHrefs,
   children,
 }: {
   user: DashboardUser;
-  navVisibility: NavVisibility;
+  visibleNavHrefs: string[];
   children: React.ReactNode;
 }) {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <AppSidebar navVisibility={navVisibility} />
+        <AppSidebar visibleNavHrefs={visibleNavHrefs} />
         <SidebarInset className="md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:rounded-t-none">
           <AppTopbar user={user} />
           <main className="flex flex-1 flex-col p-6">{children}</main>

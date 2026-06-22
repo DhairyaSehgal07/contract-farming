@@ -38,6 +38,10 @@ async function loadRolePermissionsFromDb(role: Role): Promise<string[]> {
 }
 
 function getCachedRolePermissions(role: Role): Promise<string[]> {
+  if (process.env.NODE_ENV !== "production") {
+    return loadRolePermissionsFromDb(role);
+  }
+
   return unstable_cache(
     async () => loadRolePermissionsFromDb(role),
     ["role-permissions", role],
