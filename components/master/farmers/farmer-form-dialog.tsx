@@ -88,9 +88,11 @@ export function FarmerFormDialog({
   isPending = false,
   onSubmit,
 }: FarmerFormDialogProps) {
-  const { data: stations = [] } = useStations();
+  const { data: stations = [] } = useStations({ enabled: open });
   const [stationId, setStationId] = useState(initialFarmer?.stationId ?? "");
-  const { data: localities = [] } = useLocalities(stationId || null);
+  const { data: localities = [] } = useLocalities(
+    open ? stationId || null : null,
+  );
 
   const form = useForm({
     defaultValues: toFormValues(initialFarmer),
@@ -125,6 +127,7 @@ export function FarmerFormDialog({
         </DialogHeader>
 
         <form
+          autoComplete="off"
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -143,6 +146,7 @@ export function FarmerFormDialog({
                       <FieldLabel htmlFor="farmer-name">Name</FieldLabel>
                       <Input
                         id="farmer-name"
+                        autoComplete="off"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
@@ -169,6 +173,7 @@ export function FarmerFormDialog({
                       </FieldLabel>
                       <Input
                         id="farmer-account"
+                        autoComplete="off"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) =>

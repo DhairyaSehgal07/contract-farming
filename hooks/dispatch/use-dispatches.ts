@@ -14,6 +14,10 @@ import {
   fetchDispatches,
 } from "@/lib/query/dispatch-fetchers";
 import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
+import {
+  LIST_DATA_STALE_TIME,
+  REFERENCE_DATA_STALE_TIME,
+} from "@/lib/query/query-options";
 import type {
   ConfirmLotReceiptInput,
   CreateDispatchInput,
@@ -25,6 +29,7 @@ export function useDispatches() {
   return useQuery({
     queryKey: dispatchKeys.list(),
     queryFn: fetchDispatches,
+    staleTime: LIST_DATA_STALE_TIME,
   });
 }
 
@@ -33,20 +38,31 @@ export function useDispatch(id: string) {
     queryKey: dispatchKeys.detail(id),
     queryFn: () => fetchDispatch(id),
     enabled: Boolean(id),
+    staleTime: LIST_DATA_STALE_TIME,
   });
 }
 
-export function useDispatchableRequisitions() {
+type DispatchableRequisitionsOptions = {
+  enabled?: boolean;
+};
+
+export function useDispatchableRequisitions(
+  options: DispatchableRequisitionsOptions = {},
+) {
   return useQuery({
     queryKey: dispatchKeys.dispatchableRequisitions(),
     queryFn: fetchDispatchableRequisitions,
+    enabled: options.enabled ?? true,
+    staleTime: LIST_DATA_STALE_TIME,
   });
 }
 
-export function useDispatchFormOptions() {
+export function useDispatchFormOptions(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: dispatchKeys.formOptions(),
     queryFn: fetchDispatchFormOptions,
+    enabled: options.enabled ?? true,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 
@@ -62,8 +78,11 @@ export function useCreateDispatch() {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
-      void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       toast.success("Dispatch created");
     },
     onError: (error: Error) => {
@@ -84,8 +103,11 @@ export function useUpdateDispatchStep2() {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
-      void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       toast.success("Dispatch updated");
     },
     onError: (error: Error) => {
@@ -106,8 +128,11 @@ export function useDeleteDispatch() {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
-      void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       toast.success("Dispatch deleted");
     },
     onError: (error: Error) => {
@@ -148,7 +173,10 @@ export function useConfirmLotReceipt(dispatchId: string) {
     onSuccess: (data) => {
       queryClient.setQueryData(dispatchKeys.detail(dispatchId), data);
       void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
-      void queryClient.invalidateQueries({ queryKey: requisitionKeys.all });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
+      void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       toast.success("Lot received");
     },
     onError: (error: Error) => {

@@ -1,11 +1,13 @@
-import { Suspense } from "react";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { StationsSection } from "@/components/master/stations/stations-section";
-import { StationsSectionSkeleton } from "@/components/master/stations/stations-section-skeleton";
+import { prefetchStations } from "@/lib/query/prefetch-master";
 
-export default function StationsPage() {
+export default async function StationsPage() {
+  const queryClient = await prefetchStations();
+
   return (
-    <Suspense fallback={<StationsSectionSkeleton />}>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <StationsSection />
-    </Suspense>
+    </HydrationBoundary>
   );
 }

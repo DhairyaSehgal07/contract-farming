@@ -11,6 +11,10 @@ import {
 } from "@/app/actions/requisition/requisitions";
 import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
 import {
+  LIST_DATA_STALE_TIME,
+  REFERENCE_DATA_STALE_TIME,
+} from "@/lib/query/query-options";
+import {
   fetchRequisition,
   fetchRequisitionFarmers,
   fetchRequisitions,
@@ -27,6 +31,7 @@ export function useRequisitions() {
   return useQuery({
     queryKey: requisitionKeys.list(),
     queryFn: fetchRequisitions,
+    staleTime: LIST_DATA_STALE_TIME,
   });
 }
 
@@ -38,17 +43,21 @@ export function useRequisition(id: string | null) {
   });
 }
 
-export function useRequisitionFarmers() {
+export function useRequisitionFarmers(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: requisitionKeys.farmers(),
     queryFn: fetchRequisitionFarmers,
+    enabled: options.enabled ?? true,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 
-export function useRequisitionVarieties() {
+export function useRequisitionVarieties(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: requisitionKeys.varieties(),
     queryFn: fetchRequisitionVarieties,
+    enabled: options.enabled ?? true,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 
@@ -137,7 +146,9 @@ export function useApproveRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(data.id),
       });
-      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
       toast.success("Requisition approved");
     },
     onError: (error: Error) => {
@@ -162,7 +173,9 @@ export function useRejectRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(data.id),
       });
-      void queryClient.invalidateQueries({ queryKey: dispatchKeys.all });
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.dispatchableRequisitions(),
+      });
       toast.success("Requisition rejected");
     },
     onError: (error: Error) => {

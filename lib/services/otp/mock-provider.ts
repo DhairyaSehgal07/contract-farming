@@ -44,7 +44,8 @@ export function createMockOtpProvider(): OtpProvider {
 
       return {
         expiresAt,
-        devOtp: process.env.NODE_ENV === "development" ? code : undefined,
+        // TODO: remove once real SMS OTP is wired — mock provider only
+        devOtp: code,
       };
     },
 

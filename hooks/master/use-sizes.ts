@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/master/sizes";
 import { masterKeys } from "@/lib/query/keys";
 import { fetchSizes } from "@/lib/query/master-fetchers";
+import { REFERENCE_DATA_STALE_TIME } from "@/lib/query/query-options";
 import type {
   CreateSizeInput,
   UpdateSizeInput,
@@ -18,6 +19,7 @@ export function useSizes() {
   return useQuery({
     queryKey: masterKeys.sizes(),
     queryFn: fetchSizes,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 

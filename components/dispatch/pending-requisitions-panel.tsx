@@ -22,17 +22,19 @@ import {
 
 type PendingRequisitionsPanelProps = {
   canWrite: boolean;
+  enabled?: boolean;
 };
 
 export function PendingRequisitionsPanel({
   canWrite,
+  enabled = true,
 }: PendingRequisitionsPanelProps) {
   const {
     data: requisitions = [],
     isPending,
     isError,
     error,
-  } = useDispatchableRequisitions();
+  } = useDispatchableRequisitions({ enabled });
 
   const columns = useMemo(
     () => createPendingRequisitionColumns({ canWrite }),

@@ -66,6 +66,31 @@ describe("updateRolePermissions", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
+  it("adds read when saving write-only dispatch grants", async () => {
+    const createMany = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({
+        rolePermission: {
+          deleteMany: vi.fn(),
+          createMany,
+        },
+      }),
+    );
+
+    const result = await updateRolePermissions({
+      role: Role.USER,
+      grants: [{ resource: "dispatch", action: "write" }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(createMany).toHaveBeenCalledWith({
+      data: [
+        { role: Role.USER, resource: "dispatch", action: "write" },
+        { role: Role.USER, resource: "dispatch", action: "read" },
+      ],
+    });
+  });
+
   it("accepts requisition approve grants", async () => {
     const result = await updateRolePermissions({
       role: Role.PROGRAMME_MANAGER,

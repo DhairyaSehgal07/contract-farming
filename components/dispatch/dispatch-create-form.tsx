@@ -18,7 +18,9 @@ export function DispatchCreateForm() {
   const [selections, setSelections] =
     useState<DispatchRequisitionSelectionMap>(new Map());
 
-  const { data: requisitions = [] } = useDispatchableRequisitions();
+  const { data: requisitions = [] } = useDispatchableRequisitions({
+    enabled: step === 2,
+  });
   const createMutation = useCreateDispatch();
 
   function handleSubmit(values: CreateDispatchInput) {

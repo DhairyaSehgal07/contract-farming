@@ -102,9 +102,9 @@ export function DispatchLotReceiptDialog({
         <FieldGroup>
           {devOtp ? (
             <div className="rounded-md border border-dashed p-3 text-sm">
-              <p className="font-medium">Development OTP</p>
+              <p className="font-medium">Simulated OTP</p>
               <p className="text-muted-foreground">
-                Use this code while SMS is mocked:{" "}
+                SMS is not sent yet — use this code to confirm receipt:{" "}
                 <span className="font-mono text-foreground">{devOtp}</span>
               </p>
             </div>

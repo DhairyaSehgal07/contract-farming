@@ -3,12 +3,15 @@ import {
   isServer,
   QueryClient,
 } from "@tanstack/react-query";
+import { cache } from "react";
+import { LIST_DATA_STALE_TIME } from "@/lib/query/query-options";
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
+        staleTime: LIST_DATA_STALE_TIME,
+        refetchOnWindowFocus: false,
       },
       dehydrate: {
         shouldDehydrateQuery: (query) =>
@@ -21,9 +24,11 @@ function makeQueryClient() {
 
 let browserQueryClient: QueryClient | undefined;
 
+const getServerQueryClient = cache(() => makeQueryClient());
+
 export function getQueryClient() {
   if (isServer) {
-    return makeQueryClient();
+    return getServerQueryClient();
   }
 
   if (!browserQueryClient) {

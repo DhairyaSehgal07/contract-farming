@@ -173,6 +173,21 @@ function FieldSeparator({
   );
 }
 
+function getFieldErrorMessage(error: unknown): string | undefined {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    return typeof message === "string" && message.length > 0
+      ? message
+      : undefined;
+  }
+
+  return undefined;
+}
+
 function FieldError({
   className,
   children,
@@ -190,20 +205,27 @@ function FieldError({
       return null;
     }
 
-    const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
+    const uniqueMessages = [
+      ...new Set(
+        errors
+          .map((error) => getFieldErrorMessage(error))
+          .filter((message): message is string => Boolean(message)),
+      ),
     ];
 
-    if (uniqueErrors?.length == 1) {
-      return uniqueErrors[0]?.message;
+    if (uniqueMessages.length === 1) {
+      return uniqueMessages[0];
+    }
+
+    if (uniqueMessages.length === 0) {
+      return null;
     }
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map(
-          (error, index) =>
-            error?.message && <li key={index}>{error.message}</li>,
-        )}
+        {uniqueMessages.map((message) => (
+          <li key={message}>{message}</li>
+        ))}
       </ul>
     );
   }, [children, errors]);

@@ -10,11 +10,9 @@ import { PendingRequisitionsPanel } from "@/components/dispatch/pending-requisit
 import { DeleteConfirmDialog } from "@/components/master/delete-confirm-dialog";
 import { MasterSectionHeader } from "@/components/master/master-section-header";
 import { MasterTableSkeleton } from "@/components/master/master-table-skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useDeleteDispatch,
-  useDispatchableRequisitions,
   useDispatches,
   useUpdateDispatchStep2,
 } from "@/hooks/dispatch/use-dispatches";
@@ -26,7 +24,7 @@ type DispatchesSectionProps = {
 
 export function DispatchesSection({ canWrite }: DispatchesSectionProps) {
   const { data = [], isPending, isError, error } = useDispatches();
-  const { data: pendingRequisitions = [] } = useDispatchableRequisitions();
+  const [activeTab, setActiveTab] = useState("dispatches");
   const updateMutation = useUpdateDispatchStep2();
   const deleteMutation = useDeleteDispatch();
   const [editOpen, setEditOpen] = useState(false);
@@ -84,15 +82,10 @@ export function DispatchesSection({ canWrite }: DispatchesSectionProps) {
         actionHref={canWrite ? "/dispatch/new" : undefined}
       />
 
-      <Tabs defaultValue="dispatches">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList variant="line" className="w-full justify-start">
           <TabsTrigger value="dispatches">Dispatches</TabsTrigger>
-          <TabsTrigger value="pending" className="gap-2">
-            Pending requisitions
-            {pendingRequisitions.length > 0 ? (
-              <Badge variant="secondary">{pendingRequisitions.length}</Badge>
-            ) : null}
-          </TabsTrigger>
+          <TabsTrigger value="pending">Pending requisitions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dispatches" className="mt-6">
@@ -111,7 +104,7 @@ export function DispatchesSection({ canWrite }: DispatchesSectionProps) {
         </TabsContent>
 
         <TabsContent value="pending" className="mt-6">
-          <PendingRequisitionsPanel canWrite={canWrite} />
+          <PendingRequisitionsPanel canWrite={canWrite} enabled={activeTab === "pending"} />
         </TabsContent>
       </Tabs>
 

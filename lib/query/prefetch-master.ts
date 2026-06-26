@@ -3,91 +3,66 @@ import {
   fetchFarmers,
   fetchGenerations,
   fetchLocalities,
+  fetchLocations,
   fetchSizes,
   fetchStations,
   fetchVarieties,
 } from "@/lib/query/master-fetchers";
 import { getQueryClient } from "@/lib/query/query-client";
 
-export async function prefetchVarieties() {
+type PrefetchEntry = {
+  queryKey: readonly unknown[];
+  queryFn: () => Promise<unknown>;
+};
+
+export async function prefetchMasterQueries(entries: PrefetchEntry[]) {
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.varieties(),
-    queryFn: fetchVarieties,
-  });
+  await Promise.all(entries.map((entry) => queryClient.prefetchQuery(entry)));
   return queryClient;
+}
+
+export async function prefetchVarieties() {
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.varieties(), queryFn: fetchVarieties },
+  ]);
 }
 
 export async function prefetchSizes() {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.sizes(),
-    queryFn: fetchSizes,
-  });
-  return queryClient;
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.sizes(), queryFn: fetchSizes },
+  ]);
 }
 
 export async function prefetchGenerations() {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.generations(),
-    queryFn: fetchGenerations,
-  });
-  return queryClient;
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.generations(), queryFn: fetchGenerations },
+  ]);
 }
 
 export async function prefetchStations() {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.stations(),
-    queryFn: fetchStations,
-  });
-  return queryClient;
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.stations(), queryFn: fetchStations },
+  ]);
 }
 
 export async function prefetchLocalities(stationId: string) {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.localities(stationId),
-    queryFn: () => fetchLocalities(stationId),
-  });
-  return queryClient;
+  return prefetchMasterQueries([
+    {
+      queryKey: masterKeys.localities(stationId),
+      queryFn: () => fetchLocalities(stationId),
+    },
+  ]);
 }
 
 export async function prefetchFarmers() {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: masterKeys.farmers(),
-    queryFn: fetchFarmers,
-  });
-  return queryClient;
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.farmers(), queryFn: fetchFarmers },
+    { queryKey: masterKeys.stations(), queryFn: fetchStations },
+  ]);
 }
 
-export async function prefetchAllMaster() {
-  const queryClient = getQueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: masterKeys.stations(),
-      queryFn: fetchStations,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: masterKeys.farmers(),
-      queryFn: fetchFarmers,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: masterKeys.varieties(),
-      queryFn: fetchVarieties,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: masterKeys.sizes(),
-      queryFn: fetchSizes,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: masterKeys.generations(),
-      queryFn: fetchGenerations,
-    }),
+export async function prefetchLocations() {
+  return prefetchMasterQueries([
+    { queryKey: masterKeys.locations(), queryFn: fetchLocations },
   ]);
-
-  return queryClient;
 }

@@ -8,6 +8,7 @@ import {
   APP_RESOURCES,
   catalogGrants,
   EDITABLE_ROLES,
+  normalizePermissionGrants,
   type AppPermissionGrant,
 } from "@/lib/auth/permission-catalog";
 import type { AppRole, EditableRole } from "@/lib/auth/roles";
@@ -75,13 +76,14 @@ export async function updateRolePermissions(
   }
 
   const { role, grants } = parsed.data;
+  const normalizedGrants = normalizePermissionGrants(grants);
 
   try {
     await prisma.$transaction(async (tx) => {
       await tx.rolePermission.deleteMany({ where: { role } });
-      if (grants.length > 0) {
+      if (normalizedGrants.length > 0) {
         await tx.rolePermission.createMany({
-          data: grants.map((grant) => ({
+          data: normalizedGrants.map((grant) => ({
             role,
             resource: grant.resource,
             action: grant.action,

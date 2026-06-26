@@ -1,23 +1,28 @@
 import { navItems } from "@/components/layout/nav-config";
-import { roleHasPermission } from "@/lib/auth/authorization";
-import type { AppRole } from "@/lib/auth/roles";
+import {
+  getRolePermissions,
+} from "@/lib/auth/authorization";
+import { MANAGING_DIRECTOR_ROLE, type AppRole } from "@/lib/auth/roles";
+import type { Role } from "@/app/generated/prisma/client";
 
 export async function getVisibleNavHrefs(role: AppRole): Promise<string[]> {
-  const entries = await Promise.all(
-    navItems.map(async (item) => {
+  const permissions =
+    role === MANAGING_DIRECTOR_ROLE
+      ? null
+      : await getRolePermissions(role as Role);
+
+  return navItems
+    .filter((item) => {
       if (!item.requiredAppPermission) {
-        return item.href;
+        return true;
       }
 
-      const allowed = await roleHasPermission(
-        role,
-        item.requiredAppPermission.resource,
-        item.requiredAppPermission.action,
-      );
+      if (role === MANAGING_DIRECTOR_ROLE) {
+        return true;
+      }
 
-      return allowed ? item.href : null;
-    }),
-  );
-
-  return entries.filter((href): href is string => href !== null);
+      const { resource, action } = item.requiredAppPermission;
+      return permissions?.has(`${resource}:${action}`) ?? false;
+    })
+    .map((item) => item.href);
 }

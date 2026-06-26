@@ -9,15 +9,18 @@ import {
 } from "@/app/actions/master/stations";
 import { masterKeys } from "@/lib/query/keys";
 import { fetchStations } from "@/lib/query/master-fetchers";
+import { REFERENCE_DATA_STALE_TIME } from "@/lib/query/query-options";
 import type {
   CreateStationInput,
   UpdateStationInput,
 } from "@/lib/schemas/master/station";
 
-export function useStations() {
+export function useStations(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: masterKeys.stations(),
     queryFn: fetchStations,
+    enabled: options.enabled ?? true,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 

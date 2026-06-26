@@ -3,10 +3,10 @@ import { generateId } from "better-auth";
 import { hashPassword } from "better-auth/crypto";
 import { config } from "dotenv";
 import {
-  PrismaClient,
-  RequisitionStatus,
-  Role,
-} from "../app/generated/prisma/client";
+  DEFAULT_ROLE_PERMISSIONS,
+  MANAGING_DIRECTOR_DB_PERMISSIONS,
+} from "../lib/auth/default-role-permissions";
+import { PrismaClient, Role } from "../app/generated/prisma/client";
 
 config({ override: true });
 
@@ -50,56 +50,6 @@ const SEED_USERS = [
   },
 ] as const;
 
-const DASHBOARD_READ = [{ resource: "dashboard", action: "read" }] as const;
-
-const REQUISITION_ACCESS = [
-  { resource: "requisition", action: "read" },
-  { resource: "requisition", action: "write" },
-] as const;
-
-const REQUISITION_APPROVE = [
-  { resource: "requisition", action: "approve" },
-] as const;
-
-const DISPATCH_ACCESS = [
-  { resource: "dispatch", action: "read" },
-  { resource: "dispatch", action: "write" },
-] as const;
-
-const DEFAULT_ROLE_PERMISSIONS: Record<
-  Role,
-  { resource: string; action: string }[]
-> = {
-  [Role.MANAGING_DIRECTOR]: [],
-  [Role.PROGRAMME_MANAGER]: [
-    { resource: "dashboard", action: "read" },
-    { resource: "master", action: "read" },
-    { resource: "master", action: "write" },
-    ...REQUISITION_ACCESS,
-    ...REQUISITION_APPROVE,
-    ...DISPATCH_ACCESS,
-  ],
-  [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [
-    ...DASHBOARD_READ,
-    ...REQUISITION_ACCESS,
-    ...REQUISITION_APPROVE,
-    ...DISPATCH_ACCESS,
-  ],
-  [Role.FIELD_OPERATIONS_MANAGER]: [
-    ...DASHBOARD_READ,
-    ...REQUISITION_ACCESS,
-    ...DISPATCH_ACCESS,
-  ],
-  [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [
-    ...DASHBOARD_READ,
-    ...REQUISITION_ACCESS,
-    ...DISPATCH_ACCESS,
-  ],
-  [Role.LOGISTICS_EXECUTIVE]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
-  [Role.FIELD_OFFICER]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
-  [Role.USER]: [...DASHBOARD_READ],
-};
-
 const VARIETIES = ["Himalini", "B101", "Jyoti"] as const;
 
 const GENERATIONS = ["G2", "G3", "Foundation", "Certified"] as const;
@@ -127,11 +77,56 @@ const LOCATIONS = [
   { name: "Rudrapur Processing Unit", category: "Source" },
 ] as const;
 
-const SEED_IDS = {
-  requisitionPending: "seed-requisition-001",
-  requisitionApproved: "seed-requisition-002",
-  requisitionRejected: "seed-requisition-003",
-} as const;
+const SEED_FARMERS = [
+  {
+    name: "Kulwinder Singh",
+    accountNumber: "86",
+    mobileNumber: "9800000001",
+    aadharNumber: "100000000001",
+  },
+  {
+    name: "Inderjit Singh",
+    accountNumber: "87",
+    mobileNumber: "9800000002",
+    aadharNumber: "100000000002",
+  },
+  {
+    name: "Gurvinder Singh",
+    accountNumber: "88",
+    mobileNumber: "9800000003",
+    aadharNumber: "100000000003",
+  },
+  {
+    name: "Jaspal Singh",
+    accountNumber: "89",
+    mobileNumber: "9800000004",
+    aadharNumber: "100000000004",
+  },
+  {
+    name: "Sohan Singh",
+    accountNumber: "90",
+    mobileNumber: "9800000005",
+    aadharNumber: "100000000005",
+  },
+  {
+    name: "Sukhdev Singh",
+    accountNumber: "91",
+    mobileNumber: "9800000006",
+    aadharNumber: "100000000006",
+  },
+  {
+    name: "Lakhvinder Singh",
+    accountNumber: "92",
+    mobileNumber: "9800000007",
+    aadharNumber: "100000000007",
+  },
+  {
+    name: "Kamaljeet",
+    accountNumber: "93",
+    mobileNumber: "9800000008",
+    aadharNumber: "100000000008",
+  },
+] as const;
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
@@ -222,10 +217,11 @@ async function seedRolePermissions() {
   }
 
   await prisma.rolePermission.createMany({
-    data: [
-      { role: Role.MANAGING_DIRECTOR, resource: "permissions", action: "read" },
-      { role: Role.MANAGING_DIRECTOR, resource: "permissions", action: "write" },
-    ],
+    data: MANAGING_DIRECTOR_DB_PERMISSIONS.map((grant) => ({
+      role: Role.MANAGING_DIRECTOR,
+      resource: grant.resource,
+      action: grant.action,
+    })),
   });
 }
 
@@ -268,142 +264,35 @@ async function seedGeography() {
     data: { name: "Puranpur", stationId: bazpurStation.id },
   });
 
-  const bazpurZone1Locality = await prisma.locality.create({
+  await prisma.locality.create({
     data: { name: "Zone 1", stationId: bazpurStation.id },
   });
 
-  const kashipurZone1Locality = await prisma.locality.create({
+  await prisma.locality.create({
     data: { name: "Zone 1", stationId: kashipurStation.id },
   });
 
-  const amandeepFarmer = await prisma.farmer.create({
-    data: {
-      name: "Amandeep Singh S/O Kashmir Singh",
-      accountNumber: "1",
-      mobileNumber: "9876543210",
-      aadharNumber: "234567891234",
-      panCardNumber: "ABCPK1234D",
-      bankAccountName: "Amandeep Singh",
-      bankName: "Punjab National Bank",
-      bankAccountNumber: "12345678901234",
-      bankIfscCode: "PUNB0123400",
-      bankBranchName: "Bazpur",
-      stationId: bazpurStation.id,
-      localityId: puranpurLocality.id,
-    },
-  });
+  for (const farmer of SEED_FARMERS) {
+    await prisma.farmer.create({
+      data: {
+        name: farmer.name,
+        accountNumber: farmer.accountNumber,
+        mobileNumber: farmer.mobileNumber,
+        aadharNumber: farmer.aadharNumber,
+        stationId: bazpurStation.id,
+        localityId: puranpurLocality.id,
+      },
+    });
+  }
 
-  const ajitFarmer = await prisma.farmer.create({
-    data: {
-      name: "Ajit Singh Punia S/O Harkewal Singh",
-      accountNumber: "83",
-      mobileNumber: "9639400000",
-      aadharNumber: "443322110987",
-      panCardNumber: "AJITP1234K",
-      stationId: bazpurStation.id,
-      localityId: bazpurZone1Locality.id,
-    },
-  });
-
-  const tirathFarmer = await prisma.farmer.create({
-    data: {
-      name: "Tirath Singh S/O Gurcharan Singh",
-      accountNumber: "82",
-      mobileNumber: "9917146444",
-      aadharNumber: "556677889900",
-      panCardNumber: "TIRAT1234L",
-      stationId: kashipurStation.id,
-      localityId: kashipurZone1Locality.id,
-    },
-  });
-
-  return {
-    bazpurStation,
-    amandeepFarmer,
-    ajitFarmer,
-    tirathFarmer,
-  };
-}
-
-async function seedRequisitions({
-  varietyId,
-  createdById,
-  reviewedById,
-  amandeepFarmerId,
-  ajitFarmerId,
-}: {
-  varietyId: string;
-  createdById: string;
-  reviewedById: string;
-  amandeepFarmerId: string;
-  ajitFarmerId: string;
-}) {
-  await prisma.requisition.create({
-    data: {
-      id: SEED_IDS.requisitionPending,
-      requisitionDate: new Date("2026-06-01"),
-      requestedDeliveryDate: new Date("2026-06-15"),
-      acres: 2.5,
-      initialQuantity: null,
-      fulfilledQuantity: 0,
-      fulfilledAcres: 0,
-      status: RequisitionStatus.PENDING,
-      remarks: "Urgent delivery requested for early sowing",
-      farmerId: amandeepFarmerId,
-      varietyId,
-      createdById,
-    },
-  });
-
-  await prisma.requisition.create({
-    data: {
-      id: SEED_IDS.requisitionApproved,
-      requisitionDate: new Date("2026-06-02"),
-      requestedDeliveryDate: new Date("2026-06-16"),
-      approvedDeliveryDate: new Date("2026-06-12"),
-      acres: null,
-      initialQuantity: 100,
-      fulfilledQuantity: 0,
-      fulfilledAcres: 0,
-      status: RequisitionStatus.APPROVED,
-      remarks: "Standard bag order for dispatch testing",
-      farmerId: amandeepFarmerId,
-      varietyId,
-      createdById,
-      reviewedById,
-      reviewedAt: new Date("2026-06-10T10:00:00.000Z"),
-      approvalDate: new Date("2026-06-10"),
-    },
-  });
-
-  await prisma.requisition.create({
-    data: {
-      id: SEED_IDS.requisitionRejected,
-      requisitionDate: new Date("2026-06-03"),
-      requestedDeliveryDate: new Date("2026-06-18"),
-      acres: 1.5,
-      initialQuantity: null,
-      fulfilledQuantity: 0,
-      fulfilledAcres: 0,
-      status: RequisitionStatus.REJECTED,
-      remarks: "Requested for kharif season",
-      rejectionRemarks: "Insufficient acreage details provided",
-      rejectionDate: new Date("2026-06-09"),
-      farmerId: ajitFarmerId,
-      varietyId,
-      createdById,
-      reviewedById,
-      reviewedAt: new Date("2026-06-09T10:00:00.000Z"),
-    },
-  });
+  return bazpurStation;
 }
 
 async function main() {
   console.log("Clearing all data…");
   await clearAllData();
 
-  const { bazpurStation, amandeepFarmer, ajitFarmer } =
-    await seedGeography();
+  const bazpurStation = await seedGeography();
 
   console.log("Seeding users and permissions…");
   await seedUsers(bazpurStation.id);
@@ -411,25 +300,6 @@ async function main() {
 
   console.log("Seeding master data…");
   await seedMasterData();
-
-  const variety = await prisma.variety.findUniqueOrThrow({
-    where: { name: "Himalini" },
-  });
-  const fieldOfficer = await prisma.user.findUniqueOrThrow({
-    where: { email: "field.officer@example.com" },
-  });
-  const programmeManager = await prisma.user.findUniqueOrThrow({
-    where: { email: "programme.manager@example.com" },
-  });
-
-  console.log("Seeding requisitions…");
-  await seedRequisitions({
-    varietyId: variety.id,
-    createdById: fieldOfficer.id,
-    reviewedById: programmeManager.id,
-    amandeepFarmerId: amandeepFarmer.id,
-    ajitFarmerId: ajitFarmer.id,
-  });
 
   console.log("Seed complete:");
   for (const user of SEED_USERS) {
@@ -440,9 +310,8 @@ async function main() {
   console.log(`  ${SIZES.length} sizes`);
   console.log(`  ${LOCATIONS.length} locations`);
   console.log(
-    "  2 stations (Bazpur, Kashipur), 3 localities, 3 farmers",
+    `  2 stations (Bazpur, Kashipur), 3 localities, ${SEED_FARMERS.length} farmers`,
   );
-  console.log("  3 requisitions (1 pending, 1 approved, 1 rejected)");
   console.log("  default role permissions seeded");
 }
 

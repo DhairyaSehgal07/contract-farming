@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { headers } from "next/headers";
+import { cache } from "react";
 import { Role } from "@/app/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import {
@@ -37,11 +38,7 @@ async function loadRolePermissionsFromDb(role: Role): Promise<string[]> {
   return rows.map((row) => `${row.resource}:${row.action}`);
 }
 
-function getCachedRolePermissions(role: Role): Promise<string[]> {
-  if (process.env.NODE_ENV !== "production") {
-    return loadRolePermissionsFromDb(role);
-  }
-
+function getCrossRequestRolePermissions(role: Role): Promise<string[]> {
   return unstable_cache(
     async () => loadRolePermissionsFromDb(role),
     ["role-permissions", role],
@@ -49,8 +46,16 @@ function getCachedRolePermissions(role: Role): Promise<string[]> {
   )();
 }
 
+/** One DB read per role per server request (nav + layouts share this). */
+const getRequestRolePermissions = cache(async (role: Role): Promise<string[]> => {
+  if (process.env.NODE_ENV === "production") {
+    return getCrossRequestRolePermissions(role);
+  }
+  return loadRolePermissionsFromDb(role);
+});
+
 export async function getRolePermissions(role: Role): Promise<Set<string>> {
-  const grants = await getCachedRolePermissions(role);
+  const grants = await getRequestRolePermissions(role);
   return new Set(Array.isArray(grants) ? grants : []);
 }
 

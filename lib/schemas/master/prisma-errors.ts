@@ -1,6 +1,16 @@
 type PrismaLikeError = {
   code: string;
-  meta?: { target?: string[]; field_name?: string };
+  meta?: {
+    target?: string[];
+    field_name?: string;
+    driverAdapterError?: {
+      cause?: {
+        constraint?: {
+          fields?: string[];
+        };
+      };
+    };
+  };
 };
 
 function isPrismaLikeError(error: unknown): error is PrismaLikeError {
@@ -17,7 +27,27 @@ const uniqueFieldLabels: Record<string, string> = {
   accountNumber: "account number",
   aadharNumber: "Aadhaar number",
   panCardNumber: "PAN card number",
+  email: "email",
 };
+
+function normalizeConstraintField(field: string): string {
+  return field.replace(/^"+|"+$/g, "");
+}
+
+function getUniqueConstraintField(error: PrismaLikeError): string | undefined {
+  const targetField = error.meta?.target?.[0];
+  if (targetField) {
+    return normalizeConstraintField(targetField);
+  }
+
+  const adapterField =
+    error.meta?.driverAdapterError?.cause?.constraint?.fields?.[0];
+  if (adapterField) {
+    return normalizeConstraintField(adapterField);
+  }
+
+  return undefined;
+}
 
 export function getPrismaErrorMessage(
   error: unknown,
@@ -39,7 +69,7 @@ export function getPrismaErrorMessage(
   }
 
   if (error.code === "P2002") {
-    const field = error.meta?.target?.[0];
+    const field = getUniqueConstraintField(error);
     const label = field ? (uniqueFieldLabels[field] ?? field) : "value";
     return `A ${entityLabel} with this ${label} already exists.`;
   }

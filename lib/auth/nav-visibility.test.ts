@@ -23,7 +23,7 @@ describe("getVisibleNavHrefs", () => {
     findMany.mockReset();
   });
 
-  it("includes requisition and dispatch for field operations manager", async () => {
+  it("includes requisition, dispatch, and master for field operations manager", async () => {
     findMany.mockResolvedValue([
       {
         id: "1",
@@ -34,11 +34,23 @@ describe("getVisibleNavHrefs", () => {
       {
         id: "2",
         role: Role.FIELD_OPERATIONS_MANAGER,
-        resource: "requisition",
+        resource: "master",
         action: "read",
       },
       {
         id: "3",
+        role: Role.FIELD_OPERATIONS_MANAGER,
+        resource: "master",
+        action: "write",
+      },
+      {
+        id: "4",
+        role: Role.FIELD_OPERATIONS_MANAGER,
+        resource: "requisition",
+        action: "read",
+      },
+      {
+        id: "5",
         role: Role.FIELD_OPERATIONS_MANAGER,
         resource: "dispatch",
         action: "read",
@@ -46,7 +58,7 @@ describe("getVisibleNavHrefs", () => {
     ]);
 
     await expect(getVisibleNavHrefs(Role.FIELD_OPERATIONS_MANAGER)).resolves.toEqual(
-      ["/", "/requisition", "/dispatch"],
+      ["/", "/requisition", "/dispatch", "/master"],
     );
   });
 
@@ -61,5 +73,43 @@ describe("getVisibleNavHrefs", () => {
     ]);
 
     await expect(getVisibleNavHrefs(Role.FIELD_OFFICER)).resolves.toEqual(["/"]);
+  });
+
+  it("includes all app sections for managing director", async () => {
+    await expect(getVisibleNavHrefs(Role.MANAGING_DIRECTOR)).resolves.toEqual([
+      "/",
+      "/requisition",
+      "/dispatch",
+      "/master",
+      "/permissions",
+    ]);
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it("includes dispatch for logistics executive", async () => {
+    findMany.mockResolvedValue([
+      {
+        id: "1",
+        role: Role.LOGISTICS_EXECUTIVE,
+        resource: "dashboard",
+        action: "read",
+      },
+      {
+        id: "2",
+        role: Role.LOGISTICS_EXECUTIVE,
+        resource: "dispatch",
+        action: "read",
+      },
+      {
+        id: "3",
+        role: Role.LOGISTICS_EXECUTIVE,
+        resource: "dispatch",
+        action: "write",
+      },
+    ]);
+
+    await expect(getVisibleNavHrefs(Role.LOGISTICS_EXECUTIVE)).resolves.toEqual(
+      ["/", "/dispatch"],
+    );
   });
 });

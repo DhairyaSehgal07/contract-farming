@@ -10,6 +10,10 @@ import {
 } from "@/app/actions/master/farmers";
 import { masterKeys } from "@/lib/query/keys";
 import { fetchFarmers } from "@/lib/query/master-fetchers";
+import {
+  LIST_DATA_STALE_TIME,
+  REFERENCE_DATA_STALE_TIME,
+} from "@/lib/query/query-options";
 import type {
   CreateFarmerInput,
   UpdateFarmerInput,
@@ -19,6 +23,7 @@ export function useFarmers() {
   return useQuery({
     queryKey: masterKeys.farmers(),
     queryFn: fetchFarmers,
+    staleTime: LIST_DATA_STALE_TIME,
   });
 }
 

@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/master/locations";
 import { masterKeys } from "@/lib/query/keys";
 import { fetchLocations } from "@/lib/query/master-fetchers";
+import { REFERENCE_DATA_STALE_TIME } from "@/lib/query/query-options";
 import type {
   CreateLocationInput,
   UpdateLocationInput,
@@ -18,6 +19,7 @@ export function useLocations() {
   return useQuery({
     queryKey: masterKeys.locations(),
     queryFn: fetchLocations,
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 

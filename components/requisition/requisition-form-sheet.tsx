@@ -78,8 +78,8 @@ export function RequisitionFormSheet({
   isPending = false,
   onSubmit,
 }: RequisitionFormSheetProps) {
-  const { data: farmers = [] } = useRequisitionFarmers();
-  const { data: varieties = [] } = useRequisitionVarieties();
+  const { data: farmers = [] } = useRequisitionFarmers({ enabled: open });
+  const { data: varieties = [] } = useRequisitionVarieties({ enabled: open });
 
   const farmerOptions = useMemo<ComboboxOption[]>(
     () =>

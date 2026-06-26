@@ -76,10 +76,22 @@ export function RoleMatrixSection() {
 
   const handleToggle = useCallback(
     (resource: AppResource, action: AppAction, checked: boolean) => {
-      setGrants((current) => ({
-        ...current,
-        [grantKey(resource, action)]: checked,
-      }));
+      setGrants((current) => {
+        const next = {
+          ...current,
+          [grantKey(resource, action)]: checked,
+        };
+
+        if (
+          checked &&
+          (action === "write" || action === "approve") &&
+          PERMISSION_CATALOG[resource].includes("read")
+        ) {
+          next[grantKey(resource, "read")] = true;
+        }
+
+        return next;
+      });
     },
     [],
   );

@@ -53,3 +53,25 @@ export function catalogGrants(): AppPermissionGrant[] {
   }
   return grants;
 }
+
+/** Write and approve require read access to reach the corresponding screens. */
+export function normalizePermissionGrants(
+  grants: ReadonlyArray<{ resource: string; action: string }>,
+): AppPermissionGrant[] {
+  const keys = new Set<string>();
+
+  for (const grant of grants) {
+    keys.add(`${grant.resource}:${grant.action}`);
+    if (grant.action === "write" || grant.action === "approve") {
+      keys.add(`${grant.resource}:read`);
+    }
+  }
+
+  return Array.from(keys).map((key) => {
+    const separatorIndex = key.indexOf(":");
+    return {
+      resource: key.slice(0, separatorIndex) as AppResource,
+      action: key.slice(separatorIndex + 1) as AppAction,
+    };
+  });
+}

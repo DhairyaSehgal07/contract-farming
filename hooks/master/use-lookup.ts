@@ -7,6 +7,7 @@ import {
   fetchGenerations,
   fetchVarieties,
 } from "@/lib/query/master-fetchers";
+import { REFERENCE_DATA_STALE_TIME } from "@/lib/query/query-options";
 import type {
   CreateLookupInput,
   UpdateLookupInput,
@@ -21,6 +22,7 @@ export function useLookupList(config: LookupConfig) {
   return useQuery({
     queryKey: config.queryKey,
     queryFn: lookupFetchers[config.entity],
+    staleTime: REFERENCE_DATA_STALE_TIME,
   });
 }
 
