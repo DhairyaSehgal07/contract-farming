@@ -11,6 +11,7 @@ export const APP_RESOURCES = [
   "permissions",
   "requisition",
   "dispatch",
+  "transfer",
 ] as const;
 
 export type AppResource = (typeof APP_RESOURCES)[number];
@@ -30,6 +31,7 @@ export const PERMISSION_CATALOG: Record<AppResource, readonly AppAction[]> = {
   permissions: ["read", "write"],
   requisition: ["read", "write", "approve"],
   dispatch: ["read", "write"],
+  transfer: ["read", "write"],
 };
 
 export { MANAGING_DIRECTOR_ROLE, EDITABLE_ROLES, ROLES as ALL_ROLES };

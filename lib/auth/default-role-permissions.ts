@@ -19,6 +19,11 @@ export const DISPATCH_ACCESS = [
   { resource: "dispatch", action: "write" },
 ] as const satisfies readonly AppPermissionGrant[];
 
+export const TRANSFER_ACCESS = [
+  { resource: "transfer", action: "read" },
+  { resource: "transfer", action: "write" },
+] as const satisfies readonly AppPermissionGrant[];
+
 export const MASTER_READ_WRITE = [
   { resource: "master", action: "read" },
   { resource: "master", action: "write" },
@@ -32,27 +37,39 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, AppPermissionGrant[]> = {
     ...REQUISITION_ACCESS,
     ...REQUISITION_APPROVE,
     ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
   ],
   [Role.ACCOUNTS_SETTLEMENTS_MANAGER]: [
     ...DASHBOARD_READ,
     ...REQUISITION_ACCESS,
     ...REQUISITION_APPROVE,
     ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
   ],
   [Role.FIELD_OPERATIONS_MANAGER]: [
     ...DASHBOARD_READ,
     ...MASTER_READ_WRITE,
     ...REQUISITION_ACCESS,
     ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
   ],
   [Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER]: [
     ...DASHBOARD_READ,
     ...REQUISITION_ACCESS,
     ...REQUISITION_APPROVE,
     ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
   ],
-  [Role.LOGISTICS_EXECUTIVE]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
-  [Role.FIELD_OFFICER]: [...DASHBOARD_READ, ...DISPATCH_ACCESS],
+  [Role.LOGISTICS_EXECUTIVE]: [
+    ...DASHBOARD_READ,
+    ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
+  ],
+  [Role.FIELD_OFFICER]: [
+    ...DASHBOARD_READ,
+    ...DISPATCH_ACCESS,
+    ...TRANSFER_ACCESS,
+  ],
   [Role.USER]: [...DASHBOARD_READ],
 };
 

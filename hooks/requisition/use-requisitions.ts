@@ -9,7 +9,8 @@ import {
   rejectRequisition,
   updateRequisition,
 } from "@/app/actions/requisition/requisitions";
-import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
+import { dispatchKeys, farmerKeys, requisitionKeys } from "@/lib/query/keys";
+import { invalidateFarmerProfileQueries } from "@/lib/query/invalidate-farmer-profile";
 import {
   LIST_DATA_STALE_TIME,
   REFERENCE_DATA_STALE_TIME,
@@ -72,8 +73,9 @@ export function useCreateRequisition() {
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      invalidateFarmerProfileQueries(queryClient, data.farmerId);
       toast.success("Requisition created");
     },
     onError: (error: Error) => {
@@ -98,6 +100,7 @@ export function useUpdateRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(data.id),
       });
+      invalidateFarmerProfileQueries(queryClient, data.farmerId);
       toast.success("Requisition updated");
     },
     onError: (error: Error) => {
@@ -122,6 +125,7 @@ export function useDeleteRequisition() {
       void queryClient.invalidateQueries({
         queryKey: requisitionKeys.detail(id),
       });
+      void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
       toast.success("Requisition deleted");
     },
     onError: (error: Error) => {
@@ -149,6 +153,7 @@ export function useApproveRequisition() {
       void queryClient.invalidateQueries({
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
+      invalidateFarmerProfileQueries(queryClient, data.farmerId);
       toast.success("Requisition approved");
     },
     onError: (error: Error) => {
@@ -176,6 +181,7 @@ export function useRejectRequisition() {
       void queryClient.invalidateQueries({
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
+      invalidateFarmerProfileQueries(queryClient, data.farmerId);
       toast.success("Requisition rejected");
     },
     onError: (error: Error) => {

@@ -179,6 +179,31 @@ function SizeLineRowEditor({
       <div className="flex items-end gap-2">
         <Field
           className="min-w-0 flex-1"
+          data-invalid={isDuplicateCombination}
+        >
+          <FieldLabel htmlFor={`dispatch-generation-${row.key}`}>
+            Generation
+          </FieldLabel>
+          <Select value={row.generationId} onValueChange={onGenerationChange}>
+            <SelectTrigger
+              id={`dispatch-generation-${row.key}`}
+              className="w-full"
+              aria-invalid={isDuplicateCombination}
+            >
+              <SelectValue placeholder="Select generation" />
+            </SelectTrigger>
+            <SelectContent>
+              {generations.map((generation) => (
+                <SelectItem key={generation.id} value={generation.id}>
+                  {generation.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field
+          className="min-w-0 flex-1"
           data-invalid={isOverLimit || missingStandard || isDuplicateCombination}
         >
           <FieldLabel htmlFor={`dispatch-size-${row.key}`}>Size</FieldLabel>
@@ -199,31 +224,6 @@ function SizeLineRowEditor({
                   {size.bagsPerAcre != null
                     ? ` (${size.bagsPerAcre} bags/acre)`
                     : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field
-          className="min-w-0 flex-1"
-          data-invalid={isDuplicateCombination}
-        >
-          <FieldLabel htmlFor={`dispatch-generation-${row.key}`}>
-            Generation
-          </FieldLabel>
-          <Select value={row.generationId} onValueChange={onGenerationChange}>
-            <SelectTrigger
-              id={`dispatch-generation-${row.key}`}
-              className="w-full"
-              aria-invalid={isDuplicateCombination}
-            >
-              <SelectValue placeholder="Select generation" />
-            </SelectTrigger>
-            <SelectContent>
-              {generations.map((generation) => (
-                <SelectItem key={generation.id} value={generation.id}>
-                  {generation.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -445,8 +445,8 @@ export function DispatchRequisitionQuantityDrawer({
             <FieldDescription>
               {remainingLabel}.{" "}
               {isAcresBased
-                ? "Select size and generation for this lot. Bags default to the max for remaining acres — adjust lower for partial dispatch."
-                : "Choose size, generation, and bag count for each line."}
+                ? "Select generation and size for this lot. Bags default to the max for remaining acres — adjust lower for partial dispatch."
+                : "Choose generation, size, and bag count for each line."}
             </FieldDescription>
             <FieldGroup>
               {rows.map((row) => (

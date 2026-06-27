@@ -239,3 +239,56 @@ function formatDecimal(value: number) {
 export function formatAcresPendingSummary(acresPending: number) {
   return `${formatDecimal(acresPending)} acres`;
 }
+
+export function getRequisitionsSummary(
+  rows: Array<{
+    status: "PENDING" | "APPROVED" | "REJECTED" | "FULFILLED";
+    acres: string | null;
+    initialQuantity: string | null;
+  }>,
+) {
+  let pendingCount = 0;
+  let approvedCount = 0;
+  let rejectedCount = 0;
+  let fulfilledCount = 0;
+  let approvedBags = 0;
+  let approvedAcres = 0;
+  let approvedBagsBased = 0;
+  let approvedAcresBased = 0;
+
+  for (const row of rows) {
+    switch (row.status) {
+      case "PENDING":
+        pendingCount += 1;
+        break;
+      case "APPROVED":
+        approvedCount += 1;
+        if (parsePositiveNumber(row.acres) !== null) {
+          approvedAcresBased += 1;
+          approvedAcres += Number.parseFloat(row.acres ?? "0");
+        } else if (parsePositiveNumber(row.initialQuantity) !== null) {
+          approvedBagsBased += 1;
+          approvedBags += Number.parseFloat(row.initialQuantity ?? "0");
+        }
+        break;
+      case "REJECTED":
+        rejectedCount += 1;
+        break;
+      case "FULFILLED":
+        fulfilledCount += 1;
+        break;
+    }
+  }
+
+  return {
+    total: rows.length,
+    pendingCount,
+    approvedCount,
+    rejectedCount,
+    fulfilledCount,
+    approvedBags,
+    approvedAcres,
+    approvedBagsBased,
+    approvedAcresBased,
+  };
+}

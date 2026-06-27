@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
-import type { FarmerRow } from "@/app/actions/master/farmers";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,44 +12,76 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { FamilyTableRow } from "@/lib/master/flatten-family-rows";
 
-type FarmerColumnActions = {
-  onEdit: (row: FarmerRow) => void;
-  onDelete: (row: FarmerRow) => void;
+type FamilyColumnActions = {
+  onEdit: (row: FamilyTableRow) => void;
+  onDelete: (row: FamilyTableRow) => void;
 };
 
-export function createFarmerColumns(
-  actions: FarmerColumnActions,
-): ColumnDef<FarmerRow>[] {
+export function createFamilyColumns(
+  actions: FamilyColumnActions,
+): ColumnDef<FamilyTableRow>[] {
   return [
     {
+      accessorKey: "accountNumber",
+      enableSorting: false,
+      meta: { enableRowSpan: true },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Account number" />
+      ),
+      cell: ({ row }) => `#${row.original.accountNumber}`,
+    },
+    {
       accessorKey: "name",
+      enableSorting: false,
+      meta: { enableRowSpan: true },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
     },
     {
-      accessorKey: "accountNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account number" />
-      ),
-    },
-    {
-      accessorKey: "mobileNumber",
-      header: "Mobile",
-    },
-    {
       id: "station",
       accessorFn: (row) => row.station.name,
+      enableSorting: false,
+      meta: { enableRowSpan: true },
       header: "Station",
     },
     {
       id: "locality",
       accessorFn: (row) => row.locality.name,
+      enableSorting: false,
+      meta: { enableRowSpan: true },
       header: "Locality",
     },
     {
+      accessorKey: "memberCount",
+      enableSorting: false,
+      meta: { enableRowSpan: true },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Members" />
+      ),
+      cell: ({ row }) => row.original.memberCount,
+    },
+    {
+      accessorKey: "memberName",
+      enableSorting: false,
+      header: "Member name",
+      cell: ({ row }) => row.original.memberName ?? "—",
+    },
+    {
+      accessorKey: "memberAccountNumber",
+      enableSorting: false,
+      header: "Member account",
+      cell: ({ row }) =>
+        row.original.memberAccountNumber
+          ? `#${row.original.memberAccountNumber}`
+          : "—",
+    },
+    {
       id: "actions",
+      enableSorting: false,
+      meta: { enableRowSpan: true },
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

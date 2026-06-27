@@ -1,6 +1,7 @@
 import { masterKeys } from "@/lib/query/keys";
 import {
-  fetchFarmers,
+  fetchFarmerFamilies,
+  fetchFarmerFamilyRecords,
   fetchGenerations,
   fetchLocalities,
   fetchLocations,
@@ -54,9 +55,12 @@ export async function prefetchLocalities(stationId: string) {
   ]);
 }
 
-export async function prefetchFarmers() {
+export async function prefetchFarmerFamilies() {
   return prefetchMasterQueries([
-    { queryKey: masterKeys.farmers(), queryFn: fetchFarmers },
+    {
+      queryKey: masterKeys.farmerFamilyRecords(),
+      queryFn: fetchFarmerFamilyRecords,
+    },
     { queryKey: masterKeys.stations(), queryFn: fetchStations },
   ]);
 }

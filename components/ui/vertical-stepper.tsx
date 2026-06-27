@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type VerticalStepperStep = {
+  id?: string;
   title: string;
   description?: string;
   icon: LucideIcon;
@@ -14,6 +15,7 @@ export type VerticalStepperStep = {
 type VerticalStepperProps = {
   steps: VerticalStepperStep[];
   "aria-label"?: string;
+  onStepSelect?: (stepId: string, index: number) => void;
 };
 
 function StepIcon({
@@ -81,25 +83,42 @@ function connectorClassName(status: VerticalStepperStep["status"]) {
 export function VerticalStepper({
   steps,
   "aria-label": ariaLabel = "Progress",
+  onStepSelect,
 }: VerticalStepperProps) {
   return (
     <nav aria-label={ariaLabel} className="w-full">
       <ol className="flex flex-col">
         {steps.map((step, index) => {
           const isLast = index === steps.length - 1;
+          const stepId = step.id ?? step.title;
+          const isSelectable = Boolean(onStepSelect);
 
           return (
-            <li key={step.title} className="flex gap-4">
+            <li key={stepId} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div
-                  className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-full",
-                    circleClassName(step.status),
-                  )}
-                  aria-current={step.status === "active" ? "step" : undefined}
-                >
-                  <StepIcon step={step} />
-                </div>
+                {isSelectable ? (
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full",
+                      circleClassName(step.status),
+                    )}
+                    aria-current={step.status === "active" ? "step" : undefined}
+                    onClick={() => onStepSelect?.(stepId, index)}
+                  >
+                    <StepIcon step={step} />
+                  </button>
+                ) : (
+                  <div
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full",
+                      circleClassName(step.status),
+                    )}
+                    aria-current={step.status === "active" ? "step" : undefined}
+                  >
+                    <StepIcon step={step} />
+                  </div>
+                )}
                 {!isLast ? (
                   <div
                     className={cn(
@@ -112,9 +131,22 @@ export function VerticalStepper({
               </div>
 
               <div className={cn("flex flex-col gap-0.5 pb-8", isLast && "pb-0")}>
-                <span className={cn("text-sm", titleClassName(step.status))}>
-                  {step.title}
-                </span>
+                {isSelectable ? (
+                  <button
+                    type="button"
+                    className={cn(
+                      "text-left text-sm",
+                      titleClassName(step.status),
+                    )}
+                    onClick={() => onStepSelect?.(stepId, index)}
+                  >
+                    {step.title}
+                  </button>
+                ) : (
+                  <span className={cn("text-sm", titleClassName(step.status))}>
+                    {step.title}
+                  </span>
+                )}
                 {step.description ? (
                   <span
                     className={cn(

@@ -7,6 +7,7 @@ import {
   MANAGING_DIRECTOR_DB_PERMISSIONS,
 } from "../lib/auth/default-role-permissions";
 import { PrismaClient, Role } from "../app/generated/prisma/client";
+import { SEED_FARMERS, SEED_FARMER_FAMILIES } from "./seed-farmers";
 
 config({ override: true });
 
@@ -35,7 +36,7 @@ const SEED_USERS = [
   },
   {
     email: "accounts.seeds@example.com",
-    name: "Ashok",
+    name: "Harjot Singh",
     role: Role.ACCOUNTS_SEEDS_SUPPLY_MANAGER,
   },
   {
@@ -44,8 +45,33 @@ const SEED_USERS = [
     role: Role.LOGISTICS_EXECUTIVE,
   },
   {
-    email: "field.officer@example.com",
-    name: "Deepak",
+    email: "mohit.chamola@example.com",
+    name: "Mohit Chamola",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "brijesh@example.com",
+    name: "Brijesh",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "rajiv@example.com",
+    name: "Rajiv",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "arvind@example.com",
+    name: "Arvind",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "vivek@example.com",
+    name: "Vivek",
+    role: Role.FIELD_OFFICER,
+  },
+  {
+    email: "deepak.satwal@example.com",
+    name: "Deepak Satwal",
     role: Role.FIELD_OFFICER,
   },
 ] as const;
@@ -77,56 +103,34 @@ const LOCATIONS = [
   { name: "Rudrapur Processing Unit", category: "Source" },
 ] as const;
 
-const SEED_FARMERS = [
-  {
-    name: "Kulwinder Singh",
-    accountNumber: "86",
-    mobileNumber: "9800000001",
-    aadharNumber: "100000000001",
-  },
-  {
-    name: "Inderjit Singh",
-    accountNumber: "87",
-    mobileNumber: "9800000002",
-    aadharNumber: "100000000002",
-  },
-  {
-    name: "Gurvinder Singh",
-    accountNumber: "88",
-    mobileNumber: "9800000003",
-    aadharNumber: "100000000003",
-  },
-  {
-    name: "Jaspal Singh",
-    accountNumber: "89",
-    mobileNumber: "9800000004",
-    aadharNumber: "100000000004",
-  },
-  {
-    name: "Sohan Singh",
-    accountNumber: "90",
-    mobileNumber: "9800000005",
-    aadharNumber: "100000000005",
-  },
-  {
-    name: "Sukhdev Singh",
-    accountNumber: "91",
-    mobileNumber: "9800000006",
-    aadharNumber: "100000000006",
-  },
-  {
-    name: "Lakhvinder Singh",
-    accountNumber: "92",
-    mobileNumber: "9800000007",
-    aadharNumber: "100000000007",
-  },
-  {
-    name: "Kamaljeet",
-    accountNumber: "93",
-    mobileNumber: "9800000008",
-    aadharNumber: "100000000008",
-  },
-] as const;
+function normalizeStationName(name: string) {
+  return name.trim().toUpperCase();
+}
+
+function normalizeZoneName(name: string) {
+  return name.trim().replace(/`+$/, "").toUpperCase();
+}
+
+function seedMobileNumber(serial: number) {
+  return `98${String(serial).padStart(8, "0")}`;
+}
+
+function formatFarmerDisplayName(name: string, fatherName: string) {
+  const cleanName = name.trim().replace(/\s+/g, " ");
+  const cleanFatherName = fatherName.trim().replace(/\s+/g, " ");
+
+  const wifeOfMatch = cleanFatherName.match(/^W\/O\.?\s+(.+)$/i);
+  if (wifeOfMatch) {
+    return `${cleanName} W/O. ${wifeOfMatch[1]}`;
+  }
+
+  const daughterOfMatch = cleanFatherName.match(/^D\/O\.?\s+(.+)$/i);
+  if (daughterOfMatch) {
+    return `${cleanName} D/O. ${daughterOfMatch[1]}`;
+  }
+
+  return `${cleanName} S/O ${cleanFatherName}`;
+}
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL,
@@ -141,6 +145,7 @@ async function clearAllData() {
   await prisma.dispatch.deleteMany();
   await prisma.requisition.deleteMany();
   await prisma.farmer.deleteMany();
+  await prisma.farmerFamily.deleteMany();
   await prisma.locality.deleteMany();
   await prisma.station.deleteMany();
   await prisma.variety.deleteMany();
@@ -244,48 +249,110 @@ async function seedMasterData() {
 }
 
 async function seedGeography() {
-  const bazpurStation = await prisma.station.create({
-    data: {
-      name: "Bazpur",
-      city: "Bazpur",
-      state: "Uttarakhand",
-    },
-  });
+  const stationNames = [
+    ...new Set(
+      SEED_FARMERS.map((farmer) => normalizeStationName(farmer.station)),
+    ),
+  ];
 
-  const kashipurStation = await prisma.station.create({
-    data: {
-      name: "Kashipur",
-      city: "Kashipur",
-      state: "Uttarakhand",
-    },
-  });
+  const stationMap = new Map<string, string>();
+  for (const name of stationNames) {
+    const station = await prisma.station.create({ data: { name } });
+    stationMap.set(name, station.id);
+  }
 
-  const puranpurLocality = await prisma.locality.create({
-    data: { name: "Puranpur", stationId: bazpurStation.id },
-  });
+  const localityMap = new Map<string, string>();
+  for (const farmer of SEED_FARMERS) {
+    const stationId = stationMap.get(normalizeStationName(farmer.station))!;
+    const zoneName = normalizeZoneName(farmer.zone);
+    const localityKey = `${stationId}:${zoneName}`;
 
-  await prisma.locality.create({
-    data: { name: "Zone 1", stationId: bazpurStation.id },
-  });
+    if (!localityMap.has(localityKey)) {
+      const locality = await prisma.locality.create({
+        data: { name: zoneName, stationId },
+      });
+      localityMap.set(localityKey, locality.id);
+    }
+  }
 
-  await prisma.locality.create({
-    data: { name: "Zone 1", stationId: kashipurStation.id },
-  });
+  const farmerBySerial = new Map(SEED_FARMERS.map((f) => [f.serial, f]));
+  const familyIdByAccountNumber = new Map<string, string>();
+  const reservedFamilyAccounts = new Set<string>(
+    SEED_FARMER_FAMILIES.map((family) => family.accountNumber),
+  );
+
+  function resolveSeedAccountNumber(farmer: (typeof SEED_FARMERS)[number]) {
+    if (farmer.accountNumber) {
+      return farmer.accountNumber;
+    }
+
+    const serialAccount = String(farmer.serial);
+    if (reservedFamilyAccounts.has(serialAccount)) {
+      return String(1000 + farmer.serial);
+    }
+
+    return serialAccount;
+  }
+
+  for (const family of SEED_FARMER_FAMILIES) {
+    const headFarmer = farmerBySerial.get(family.headSerial);
+    if (!headFarmer) {
+      throw new Error(
+        `Head farmer serial ${family.headSerial} not found for family ${family.accountNumber}.`,
+      );
+    }
+
+    const stationId = stationMap.get(normalizeStationName(headFarmer.station))!;
+    const localityId = localityMap.get(
+      `${stationId}:${normalizeZoneName(headFarmer.zone)}`,
+    )!;
+
+    const created = await prisma.farmerFamily.create({
+      data: {
+        accountNumber: family.accountNumber,
+        name: `${headFarmer.name.trim()} Family`,
+        stationId,
+        localityId,
+      },
+    });
+    familyIdByAccountNumber.set(family.accountNumber, created.id);
+  }
 
   for (const farmer of SEED_FARMERS) {
+    const stationId = stationMap.get(normalizeStationName(farmer.station))!;
+    const localityId = localityMap.get(
+      `${stationId}:${normalizeZoneName(farmer.zone)}`,
+    )!;
+
+    const familyId = farmer.familyAccountNumber
+      ? familyIdByAccountNumber.get(farmer.familyAccountNumber)
+      : undefined;
+
     await prisma.farmer.create({
       data: {
-        name: farmer.name,
-        accountNumber: farmer.accountNumber,
-        mobileNumber: farmer.mobileNumber,
-        aadharNumber: farmer.aadharNumber,
-        stationId: bazpurStation.id,
-        localityId: puranpurLocality.id,
+        name: formatFarmerDisplayName(farmer.name, farmer.fatherName),
+        accountNumber: resolveSeedAccountNumber(farmer),
+        mobileNumber: seedMobileNumber(farmer.serial),
+        aadharNumber: farmer.aadhar,
+        panCardNumber: farmer.pan?.toUpperCase() ?? null,
+        bankAccountName: farmer.fatherName.trim(),
+        bankName: farmer.bankName.trim(),
+        bankAccountNumber: String(farmer.bankAccountNumber),
+        bankIfscCode: farmer.bankIfscCode.trim().toUpperCase(),
+        bankBranchName: farmer.location.trim(),
+        stationId,
+        localityId,
+        familyId: familyId ?? null,
       },
     });
   }
 
-  return bazpurStation;
+  const bazpurStationId = stationMap.get("BAZPUR-I");
+  if (!bazpurStationId) {
+    throw new Error("BAZPUR-I station missing from seed farmers.");
+  }
+
+  return { id: bazpurStationId };
 }
 
 async function main() {
@@ -310,7 +377,7 @@ async function main() {
   console.log(`  ${SIZES.length} sizes`);
   console.log(`  ${LOCATIONS.length} locations`);
   console.log(
-    `  2 stations (Bazpur, Kashipur), 3 localities, ${SEED_FARMERS.length} farmers`,
+    `  ${SEED_FARMERS.length} farmers across seeded stations and zones`,
   );
   console.log("  default role permissions seeded");
 }

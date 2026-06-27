@@ -18,6 +18,7 @@ type DeleteConfirmDialogProps = {
   description: string;
   onConfirm: () => void;
   isPending?: boolean;
+  confirmDisabled?: boolean;
 };
 
 export function DeleteConfirmDialog({
@@ -27,6 +28,7 @@ export function DeleteConfirmDialog({
   description,
   onConfirm,
   isPending = false,
+  confirmDisabled = false,
 }: DeleteConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -39,7 +41,7 @@ export function DeleteConfirmDialog({
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
             onClick={(event) => {
               event.preventDefault();
               onConfirm();

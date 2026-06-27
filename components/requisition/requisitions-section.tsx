@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { ClipboardCheck, Clock, PackageOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { RequisitionRow } from "@/app/actions/requisition/requisitions";
 import { DataTable } from "@/components/data-table/data-table";
@@ -12,6 +13,13 @@ import { createRequisitionColumns } from "@/components/requisition/requisition-c
 import { RequisitionFormSheet } from "@/components/requisition/requisition-form-sheet";
 import { RequisitionRejectDialog } from "@/components/requisition/requisition-reject-dialog";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   useApproveRequisition,
   useCreateRequisition,
   useDeleteRequisition,
@@ -19,6 +27,9 @@ import {
   useRequisitions,
   useUpdateRequisition,
 } from "@/hooks/requisition/use-requisitions";
+import {
+  getRequisitionsSummary,
+} from "@/lib/requisition/quantity";
 import type { RequisitionFormInput } from "@/lib/schemas/requisition/requisition";
 
 type RequisitionsSectionProps = {
@@ -71,6 +82,8 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
       }),
     [canApprove],
   );
+
+  const summary = useMemo(() => getRequisitionsSummary(data), [data]);
 
   function handleCreateOpen() {
     setFormMode("create");
@@ -152,12 +165,68 @@ export function RequisitionsSection({ canApprove }: RequisitionsSectionProps) {
       ) : isError ? (
         <p className="text-sm text-destructive">{error.message}</p>
       ) : (
-        <DataTable
-          columns={columns}
-          data={data}
-          filterColumn="farmer"
-          filterPlaceholder="Search farmers…"
-        />
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Total requisitions</CardDescription>
+                <CardTitle>{summary.total}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <PackageOpen className="size-4" />
+                  <span>
+                    {summary.pendingCount} pending · {summary.approvedCount}{" "}
+                    approved · {summary.fulfilledCount} fulfilled
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Awaiting approval</CardDescription>
+                <CardTitle>{summary.pendingCount}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="size-4" />
+                  <span>
+                    {summary.pendingCount === 0
+                      ? "No requisitions pending review"
+                      : `Requisition${
+                          summary.pendingCount === 1 ? "" : "s"
+                        } need review`}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card size="sm">
+              <CardHeader>
+                <CardDescription>Approved orders</CardDescription>
+                <CardTitle>{summary.approvedCount}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ClipboardCheck className="size-4" />
+                  <span>
+                    {summary.approvedCount === 0
+                      ? "No approved requisitions"
+                      : `${summary.approvedBagsBased} by bags · ${summary.approvedAcresBased} by acres`}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <DataTable
+            columns={columns}
+            data={data}
+            filterColumn="farmer"
+            filterPlaceholder="Search farmers…"
+          />
+        </div>
       )}
 
       <RequisitionFormSheet

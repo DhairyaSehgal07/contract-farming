@@ -13,6 +13,7 @@ import {
 } from "@/lib/dispatch/lot-status";
 import prisma from "@/lib/prisma";
 import { getOtpProvider } from "@/lib/services/otp";
+import { creditFarmerStockFromLot } from "@/lib/transfer/stock-balance";
 
 type TransactionClient = Prisma.TransactionClient;
 
@@ -275,6 +276,8 @@ export async function confirmLotReceiptForLot(
         otpVerifiedAt: receivedAt,
       },
     });
+
+    await creditFarmerStockFromLot(tx, lot.id);
 
     await maybeCloseDispatch(tx, lot.dispatchRequisition.dispatchId);
   });

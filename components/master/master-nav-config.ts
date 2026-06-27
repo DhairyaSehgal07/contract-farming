@@ -5,7 +5,7 @@ import {
   MapPin,
   Ruler,
   Sprout,
-  Users,
+  UsersRound,
 } from "lucide-react";
 
 export type MasterNavItem = {
@@ -25,11 +25,11 @@ export const masterNavItems: MasterNavItem[] = [
     description: "Manage stations and their localities",
   },
   {
-    label: "Farmers",
-    value: "farmers",
-    href: "/master/farmers",
-    icon: Users,
-    description: "Manage farmer records and bank details",
+    label: "Families",
+    value: "families",
+    href: "/master/families",
+    icon: UsersRound,
+    description: "Manage farmer family groups and members",
   },
   {
     label: "Varieties",

@@ -1,4 +1,11 @@
-import { type FarmerRow, listFarmers } from "@/app/actions/master/farmers";
+import {
+  type FarmerFamilyOption,
+  listFarmerFamilies,
+} from "@/app/actions/master/farmers";
+import {
+  type FarmerFamilyRow,
+  listFarmerFamilyRecords,
+} from "@/app/actions/master/farmer-families";
 import {
   type GenerationRow,
   listGenerations,
@@ -53,6 +60,10 @@ export async function fetchLocalities(
   return unwrap(listLocalities(stationId));
 }
 
-export async function fetchFarmers(): Promise<FarmerRow[]> {
-  return unwrap(listFarmers());
+export async function fetchFarmerFamilies(): Promise<FarmerFamilyOption[]> {
+  return unwrap(listFarmerFamilies());
+}
+
+export async function fetchFarmerFamilyRecords(): Promise<FarmerFamilyRow[]> {
+  return unwrap(listFarmerFamilyRecords());
 }

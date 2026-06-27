@@ -57,6 +57,7 @@ model User {
   requisitionsCreated  Requisition[] @relation("RequisitionCreatedBy")
   requisitionsReviewed Requisition[] @relation("RequisitionReviewedBy")
   lotsReceived         DispatchLot[] @relation("LotReceivedBy")
+  stockTransfersCreated StockTransfer[] @relation("StockTransferCreatedBy")
 
   @@index([stationId])
   @@map("user")
@@ -121,9 +122,10 @@ model Station {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  localities Locality[]
-  farmers    Farmer[]
-  users      User[]
+  localities     Locality[]
+  farmers        Farmer[]
+  farmerFamilies FarmerFamily[]
+  users          User[]
 
   @@map("station")
 }
@@ -134,12 +136,32 @@ model Locality {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stationId String
-  station   Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
-  farmers   Farmer[]
+  stationId      String
+  station        Station        @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  farmers        Farmer[]
+  farmerFamilies FarmerFamily[]
 
   @@index([stationId])
   @@map("locality")
+}
+
+model FarmerFamily {
+  id            String @id @default(cuid())
+  accountNumber String @unique
+  name          String
+
+  stationId  String
+  station    Station  @relation(fields: [stationId], references: [id], onDelete: Restrict)
+  localityId String
+  locality   Locality @relation(fields: [localityId], references: [id], onDelete: Restrict)
+
+  members   Farmer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stationId])
+  @@index([localityId])
+  @@map("farmer_family")
 }
 
 model Farmer {
@@ -165,15 +187,157 @@ model Farmer {
   localityId String
   locality   Locality @relation(fields: [localityId], references: [id], onDelete: Restrict)
 
+  familyId String?
+  family   FarmerFamily? @relation(fields: [familyId], references: [id], onDelete: SetNull)
+
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   requisitions Requisition[]
+  stockBalances FarmerStockBalance[]
+  fields        FarmerField[]
+  transfersFrom StockTransfer[] @relation("TransferFromFarmer")
+  transfersTo   StockTransfer[] @relation("TransferToFarmer")
 
   @@index([stationId])
   @@index([localityId])
+  @@index([familyId])
   @@map("farmer")
 }
 
+enum FieldActivityRound {
+  FIRST
+  SECOND
+}
+
+model FarmerField {
+  id          String  @id @default(cuid())
+  name        String
+  geoLocation String
+  acres       Decimal @db.Decimal(10, 2)
+
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  plantations  FieldPlantation[]
+  irrigations  FieldIrrigation[]
+  dehaulming   FieldDehaulming[]
+  rouging      FieldRouging[]
+  stripTests   FieldStripTest[]
+  harvests     FieldHarvest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([farmerId, name])
+  @@index([farmerId])
+  @@map("farmer_field")
+}
+
+model FieldPlantation {
+  id           String   @id @default(cuid())
+  fieldId      String
+  field        FarmerField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  varietyId    String
+  variety      Variety  @relation(fields: [varietyId], references: [id], onDelete: Restrict)
+  sizeId       String
+  size         Size     @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  bagCount     Decimal  @db.Decimal(12, 2)
+  acresPlanted Decimal  @db.Decimal(10, 2)
+  plantedAt    DateTime @db.Date
+  imageUrl     String?
+  remarks      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldId])
+  @@index([varietyId])
+  @@index([sizeId])
+  @@map("field_plantation")
+}
+
+model FieldIrrigation {
+  id          String   @id @default(cuid())
+  fieldId     String
+  field       FarmerField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  cycleNumber Int
+  irrigatedAt DateTime @db.Date
+  imageUrl    String?
+  remarks     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fieldId, cycleNumber])
+  @@index([fieldId])
+  @@map("field_irrigation")
+}
+
+model FieldDehaulming {
+  id           String             @id @default(cuid())
+  fieldId      String
+  field        FarmerField        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  round        FieldActivityRound
+  activityDate DateTime           @db.Date
+  result       String?
+  remarks      String?
+  imageUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldId])
+  @@map("field_dehaulming")
+}
+
+model FieldRouging {
+  id           String   @id @default(cuid())
+  fieldId      String
+  field        FarmerField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  activityDate DateTime @db.Date
+  result       String?
+  remarks      String?
+  imageUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldId])
+  @@map("field_rouging")
+}
+
+model FieldStripTest {
+  id           String             @id @default(cuid())
+  fieldId      String
+  field        FarmerField        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  round        FieldActivityRound
+  activityDate DateTime           @db.Date
+  result       String?
+  remarks      String?
+  imageUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldId])
+  @@map("field_strip_test")
+}
+
+model FieldHarvest {
+  id           String   @id @default(cuid())
+  fieldId      String
+  field        FarmerField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  activityDate DateTime @db.Date
+  result       String?
+  remarks      String?
+  imageUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fieldId])
+  @@map("field_harvest")
+}
 
 model Variety {
   id        String   @id @default(cuid())
@@ -182,6 +346,9 @@ model Variety {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   requisitions Requisition[]
+  stockBalances FarmerStockBalance[]
+  transferLines StockTransferLine[]
+  fieldPlantations FieldPlantation[]
 
   @@map("variety")
 }
@@ -208,6 +375,9 @@ model Size {
   updatedAt DateTime @updatedAt
 
   dispatchSizeLines DispatchRequisitionSizeLine[]
+  stockBalances     FarmerStockBalance[]
+  transferLines     StockTransferLine[]
+  fieldPlantations  FieldPlantation[]
 
   @@map("size")
 }
@@ -220,8 +390,76 @@ model Generation {
   updatedAt DateTime @updatedAt
 
   dispatchSizeLines DispatchRequisitionSizeLine[]
+  stockBalances     FarmerStockBalance[]
+  transferLines     StockTransferLine[]
 
   @@map("generation")
+}
+
+model FarmerStockBalance {
+  id           String @id @default(cuid())
+  farmerId     String
+  farmer       Farmer @relation(fields: [farmerId], references: [id], onDelete: Restrict)
+  varietyId    String
+  variety      Variety @relation(fields: [varietyId], references: [id], onDelete: Restrict)
+  sizeId       String
+  size         Size @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  generationId String
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Restrict)
+  quantity     Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([farmerId, varietyId, sizeId, generationId])
+  @@index([farmerId])
+  @@index([varietyId])
+  @@map("farmer_stock_balance")
+}
+
+model StockTransfer {
+  id           String   @id @default(cuid())
+  transferDate DateTime @db.Date
+  remarks      String?
+
+  fromFarmerId String
+  fromFarmer   Farmer @relation("TransferFromFarmer", fields: [fromFarmerId], references: [id], onDelete: Restrict)
+  toFarmerId   String
+  toFarmer     Farmer @relation("TransferToFarmer", fields: [toFarmerId], references: [id], onDelete: Restrict)
+
+  createdById String
+  createdBy   User @relation("StockTransferCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  lines StockTransferLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([transferDate])
+  @@index([fromFarmerId])
+  @@index([toFarmerId])
+  @@index([createdById])
+  @@map("stock_transfer")
+}
+
+model StockTransferLine {
+  id         String @id @default(cuid())
+  transferId String
+  transfer   StockTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  varietyId    String
+  variety      Variety @relation(fields: [varietyId], references: [id], onDelete: Restrict)
+  sizeId       String
+  size         Size @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  generationId String
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Restrict)
+  quantity     Decimal @db.Decimal(12, 2)
+
+  @@index([transferId])
+  @@index([varietyId])
+  @@index([sizeId])
+  @@index([generationId])
+  @@map("stock_transfer_line")
 }
 
 model RolePermission {

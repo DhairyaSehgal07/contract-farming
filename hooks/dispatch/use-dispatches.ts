@@ -13,7 +13,8 @@ import {
   fetchDispatchFormOptions,
   fetchDispatches,
 } from "@/lib/query/dispatch-fetchers";
-import { dispatchKeys, requisitionKeys } from "@/lib/query/keys";
+import { dispatchKeys, farmerKeys, requisitionKeys, transferKeys } from "@/lib/query/keys";
+import { invalidateFarmerProfileQueries } from "@/lib/query/invalidate-farmer-profile";
 import {
   LIST_DATA_STALE_TIME,
   REFERENCE_DATA_STALE_TIME,
@@ -83,6 +84,7 @@ export function useCreateDispatch() {
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
       toast.success("Dispatch created");
     },
     onError: (error: Error) => {
@@ -108,6 +110,7 @@ export function useUpdateDispatchStep2() {
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
       toast.success("Dispatch updated");
     },
     onError: (error: Error) => {
@@ -133,6 +136,7 @@ export function useDeleteDispatch() {
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
       toast.success("Dispatch deleted");
     },
     onError: (error: Error) => {
@@ -170,13 +174,24 @@ export function useConfirmLotReceipt(dispatchId: string) {
       }
       return result.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, input) => {
       queryClient.setQueryData(dispatchKeys.detail(dispatchId), data);
       void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
       void queryClient.invalidateQueries({
         queryKey: dispatchKeys.dispatchableRequisitions(),
       });
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
+
+      const receivedLot = data.requisitions.find(
+        (lot) => lot.id === input.lotId,
+      );
+      if (receivedLot) {
+        invalidateFarmerProfileQueries(queryClient, receivedLot.farmer.id);
+        void queryClient.invalidateQueries({
+          queryKey: transferKeys.transferableFarmers(),
+        });
+      }
+
       toast.success("Lot received");
     },
     onError: (error: Error) => {

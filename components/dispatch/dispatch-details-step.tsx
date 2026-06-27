@@ -37,6 +37,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -146,6 +147,24 @@ export function DispatchDetailsStep({
   );
   const totalBags = useMemo(
     () => summaryRows.reduce((sum, row) => sum + row.total, 0),
+    [summaryRows],
+  );
+  const totalLineCount = useMemo(
+    () =>
+      summaryRows.reduce((sum, row) => sum + row.sizeLines.length, 0),
+    [summaryRows],
+  );
+  const totalBagLines = useMemo(
+    () =>
+      summaryRows.reduce(
+        (sum, row) =>
+          sum +
+          row.sizeLines.reduce(
+            (lineSum, line) => lineSum + Number.parseFloat(line.quantity),
+            0,
+          ),
+        0,
+      ),
     [summaryRows],
   );
 
@@ -281,6 +300,24 @@ export function DispatchDetailsStep({
                       )),
                     )}
                   </TableBody>
+                  {totalLineCount > 1 ? (
+                    <TableFooter>
+                      <TableRow className="hover:bg-muted/50">
+                        <TableCell
+                          colSpan={4}
+                          className="text-center font-medium"
+                        >
+                          Total
+                        </TableCell>
+                        <TableCell className="text-center font-medium tabular-nums">
+                          {totalBagLines}
+                        </TableCell>
+                        <TableCell className="text-center font-medium tabular-nums">
+                          {totalBags}
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  ) : null}
                 </Table>
               </div>
             </FieldSet>

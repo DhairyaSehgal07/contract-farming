@@ -1,9 +1,11 @@
 import {
+  ArrowLeftRight,
   ClipboardList,
   Database,
   LayoutDashboard,
   Shield,
   Truck,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { AppAction, AppResource } from "@/lib/auth/permission-catalog";
@@ -17,6 +19,10 @@ export type NavItem = {
     resource: AppResource;
     action: AppAction;
   };
+  requiredAnyAppPermissions?: {
+    resource: AppResource;
+    action: AppAction;
+  }[];
 };
 
 export const navItems: NavItem[] = [
@@ -42,6 +48,25 @@ export const navItems: NavItem[] = [
     requiredAppPermission: { resource: "dispatch", action: "read" },
   },
   {
+    name: "Farmers",
+    href: "/farmers",
+    icon: Users,
+    activePaths: ["/farmers", "/fields"],
+    requiredAnyAppPermissions: [
+      { resource: "master", action: "read" },
+      { resource: "requisition", action: "read" },
+      { resource: "dispatch", action: "read" },
+      { resource: "transfer", action: "read" },
+    ],
+  },
+  {
+    name: "Transfer",
+    href: "/transfer",
+    icon: ArrowLeftRight,
+    activePaths: ["/transfer"],
+    requiredAppPermission: { resource: "transfer", action: "read" },
+  },
+  {
     name: "Master",
     href: "/master",
     icon: Database,
@@ -64,11 +89,14 @@ export const routeTitles: Record<string, string> = {
   "/requisition": "Requisition",
   "/dispatch": "Dispatch",
   "/dispatch/new": "New dispatch",
+  "/transfer": "Transfer",
+  "/transfer/new": "New transfer",
+  "/farmers": "Farmers",
+  "/fields": "Fields",
   "/permissions/roles": "Role permissions",
   "/permissions/users": "Users",
   "/permissions/sessions": "Sessions",
   "/master/stations": "Stations",
-  "/master/farmers": "Farmers",
   "/master/varieties": "Varieties",
   "/master/sizes": "Sizes",
   "/master/generations": "Generations",
