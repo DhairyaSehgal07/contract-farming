@@ -11,6 +11,10 @@ export function formatDateOnly(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function todayDateOnly(): string {
+  return formatDateOnly(new Date());
+}
+
 export function parseDateOnly(value: string): Date {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);

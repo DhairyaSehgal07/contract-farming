@@ -5,6 +5,7 @@ import {
   createDispatch,
   deleteDispatch,
   sendLotReceiptOtp,
+  updateDispatchBasic,
   updateDispatchStep2,
 } from "@/app/actions/dispatch/dispatches";
 import {
@@ -23,6 +24,7 @@ import type {
   ConfirmLotReceiptInput,
   CreateDispatchInput,
   SendLotReceiptOtpInput,
+  UpdateDispatchBasicInput,
   UpdateDispatchStep2Input,
 } from "@/lib/schemas/dispatch/dispatch";
 
@@ -86,6 +88,31 @@ export function useCreateDispatch() {
       void queryClient.invalidateQueries({ queryKey: requisitionKeys.list() });
       void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
       toast.success("Dispatch created");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdateDispatchBasic() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateDispatchBasicInput) => {
+      const result = await updateDispatchBasic(input);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: dispatchKeys.detail(data.id),
+      });
+      void queryClient.invalidateQueries({ queryKey: dispatchKeys.list() });
+      void queryClient.invalidateQueries({ queryKey: farmerKeys.all });
+      toast.success("Dispatch updated");
     },
     onError: (error: Error) => {
       toast.error(error.message);

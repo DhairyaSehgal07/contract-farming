@@ -8,10 +8,16 @@ import { getQueryClient } from "@/lib/query/query-client";
 
 export async function prefetchDispatchList() {
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: dispatchKeys.list(),
-    queryFn: fetchDispatches,
-  });
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: dispatchKeys.list(),
+      queryFn: fetchDispatches,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: dispatchKeys.formOptions(),
+      queryFn: fetchDispatchFormOptions,
+    }),
+  ]);
   return queryClient;
 }
 

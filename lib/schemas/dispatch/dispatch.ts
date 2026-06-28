@@ -91,8 +91,20 @@ export const dispatchStep2Schema = createDispatchSchema.omit({
   dateOfReceiving: true,
 });
 
+/** Step 2 of create flow — dispatch date defaults to today when left blank. */
+export const dispatchCreateStep2Schema = dispatchStep2Schema.extend({
+  dispatchDate: optionalDate,
+});
+
 export const updateDispatchStep2Schema = dispatchStep2Schema.extend({
   id: z.string().min(1, "Dispatch is required"),
+});
+
+export const updateDispatchBasicSchema = z.object({
+  id: z.string().min(1, "Dispatch is required"),
+  dispatchDate: requiredDate,
+  locationId: optionalId,
+  toLocation: optionalString,
 });
 
 export const confirmLotReceiptSchema = z.object({
@@ -115,7 +127,9 @@ export type DispatchRequisitionSelectionInput = z.infer<
 >;
 export type CreateDispatchInput = z.infer<typeof createDispatchSchema>;
 export type DispatchStep2Input = z.infer<typeof dispatchStep2Schema>;
+export type DispatchCreateStep2Input = z.infer<typeof dispatchCreateStep2Schema>;
 export type UpdateDispatchStep2Input = z.infer<typeof updateDispatchStep2Schema>;
+export type UpdateDispatchBasicInput = z.infer<typeof updateDispatchBasicSchema>;
 export type ConfirmLotReceiptInput = z.infer<typeof confirmLotReceiptSchema>;
 export type SendLotReceiptOtpInput = z.infer<typeof sendLotReceiptOtpSchema>;
 
@@ -129,8 +143,13 @@ function decimalToNumber(value: string | undefined) {
 }
 
 export function normalizeCreateDispatchInput(input: CreateDispatchInput) {
+  const dispatchDate =
+    input.dispatchDate.trim() ||
+    new Date().toISOString().slice(0, 10);
+
   return {
     ...input,
+    dispatchDate,
     truckNumber: input.truckNumber.trim().toUpperCase(),
     dateOfReceiving: emptyToUndefined(input.dateOfReceiving),
     locationId: emptyToUndefined(input.locationId),
@@ -174,6 +193,15 @@ export function normalizeDispatchStep2Input(input: DispatchStep2Input) {
 export function normalizeUpdateDispatchStep2Input(input: UpdateDispatchStep2Input) {
   const { id, ...rest } = input;
   return { id, ...normalizeDispatchStep2Input(rest) };
+}
+
+export function normalizeUpdateDispatchBasicInput(input: UpdateDispatchBasicInput) {
+  return {
+    id: input.id,
+    dispatchDate: input.dispatchDate.trim(),
+    locationId: emptyToUndefined(input.locationId),
+    toLocation: emptyToUndefined(input.toLocation),
+  };
 }
 
 export type NormalizedCreateDispatchInput = ReturnType<

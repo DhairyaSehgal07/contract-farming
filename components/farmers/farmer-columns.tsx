@@ -86,9 +86,21 @@ export function createFarmerColumns(
       ),
       cell: ({ row }) => {
         if (row.getIsGrouped()) {
-          return (
-            <span className="font-medium">{formatFamilyGroupLabel(row)}</span>
-          );
+          const familyId = row.subRows[0]?.original.family?.id;
+          const label = formatFamilyGroupLabel(row);
+
+          if (familyId) {
+            return (
+              <Link
+                href={`/farmer-family/${familyId}`}
+                className="font-medium hover:underline"
+              >
+                {label}
+              </Link>
+            );
+          }
+
+          return <span className="font-medium">{label}</span>;
         }
 
         return row.original.family?.accountNumber ?? "—";

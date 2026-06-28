@@ -22,10 +22,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useDeleteDispatch,
   useDispatches,
-  useUpdateDispatchStep2,
+  useUpdateDispatchBasic,
 } from "@/hooks/dispatch/use-dispatches";
 import { getDispatchesSummary } from "@/lib/dispatch/summary";
-import type { DispatchStep2Input } from "@/lib/schemas/dispatch/dispatch";
+import type { UpdateDispatchBasicInput } from "@/lib/schemas/dispatch/dispatch";
 
 type DispatchesSectionProps = {
   canWrite: boolean;
@@ -34,7 +34,7 @@ type DispatchesSectionProps = {
 export function DispatchesSection({ canWrite }: DispatchesSectionProps) {
   const { data = [], isPending, isError, error } = useDispatches();
   const [activeTab, setActiveTab] = useState("dispatches");
-  const updateMutation = useUpdateDispatchStep2();
+  const updateMutation = useUpdateDispatchBasic();
   const deleteMutation = useDeleteDispatch();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -59,18 +59,13 @@ export function DispatchesSection({ canWrite }: DispatchesSectionProps) {
 
   const summary = useMemo(() => getDispatchesSummary(data), [data]);
 
-  function handleEditSubmit(values: DispatchStep2Input) {
-    if (!editingDispatch) return;
-
-    updateMutation.mutate(
-      { id: editingDispatch.id, ...values },
-      {
-        onSuccess: () => {
-          setEditOpen(false);
-          setEditingDispatch(null);
-        },
+  function handleEditSubmit(values: UpdateDispatchBasicInput) {
+    updateMutation.mutate(values, {
+      onSuccess: () => {
+        setEditOpen(false);
+        setEditingDispatch(null);
       },
-    );
+    });
   }
 
   function handleDeleteConfirm() {

@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { farmerKeys, transferKeys } from "@/lib/query/keys";
+import { farmerFamilyKeys, farmerKeys, transferKeys } from "@/lib/query/keys";
 
 export function invalidateFarmerProfileQueries(
   queryClient: QueryClient,
@@ -16,5 +16,26 @@ export function invalidateFarmerProfileQueries(
   });
   void queryClient.invalidateQueries({
     queryKey: transferKeys.farmerStock(farmerId),
+  });
+}
+
+export function invalidateFamilyProfileQueries(
+  queryClient: QueryClient,
+  familyId: string,
+) {
+  void queryClient.invalidateQueries({
+    queryKey: farmerFamilyKeys.requisitions(familyId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: farmerFamilyKeys.dispatches(familyId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: farmerFamilyKeys.receivedLots(familyId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: farmerFamilyKeys.stock(familyId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: farmerFamilyKeys.fields(familyId),
   });
 }

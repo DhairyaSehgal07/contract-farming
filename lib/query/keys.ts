@@ -53,6 +53,19 @@ export const fieldKeys = {
   detail: (id: string) => [...fieldKeys.all, "detail", id] as const,
 };
 
+export const farmerFamilyKeys = {
+  all: ["farmer-family"] as const,
+  detail: (id: string) => [...farmerFamilyKeys.all, "detail", id] as const,
+  requisitions: (id: string) =>
+    [...farmerFamilyKeys.all, "requisitions", id] as const,
+  dispatches: (id: string) =>
+    [...farmerFamilyKeys.all, "dispatches", id] as const,
+  receivedLots: (id: string) =>
+    [...farmerFamilyKeys.all, "received-lots", id] as const,
+  stock: (id: string) => [...farmerFamilyKeys.all, "stock", id] as const,
+  fields: (id: string) => [...farmerFamilyKeys.all, "fields", id] as const,
+};
+
 export const transferKeys = {
   all: ["transfer"] as const,
   list: () => [...transferKeys.all, "list"] as const,

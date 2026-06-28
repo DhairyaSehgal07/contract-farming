@@ -34,7 +34,7 @@ function formatRelationName(value: { name: string } | null) {
   return value?.name ?? "—";
 }
 
-function canModifyDispatch(row: DispatchRow) {
+function canDeleteDispatch(row: DispatchRow) {
   return row.status === "OPEN" && row.lotsReceived === 0;
 }
 
@@ -132,7 +132,7 @@ export function createDispatchColumns(
             enableSorting: false,
             enableHiding: false,
             cell: ({ row }) => {
-              const modifiable = canModifyDispatch(row.original);
+              const deletable = canDeleteDispatch(row.original);
 
               return (
                 <DropdownMenu>
@@ -147,16 +147,17 @@ export function createDispatchColumns(
                     <DropdownMenuItem asChild>
                       <Link href={`/dispatch/${row.original.id}`}>View</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={!actions.canWrite || !modifiable}
-                      onClick={() => actions.onEdit(row.original)}
-                    >
-                      Edit
-                    </DropdownMenuItem>
+                    {actions.canWrite ? (
+                      <DropdownMenuItem
+                        onClick={() => actions.onEdit(row.original)}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
-                      disabled={!actions.canWrite || !modifiable}
+                      disabled={!actions.canWrite || !deletable}
                       onClick={() => actions.onDelete(row.original)}
                     >
                       Delete

@@ -44,19 +44,17 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useDispatchFormOptions } from "@/hooks/dispatch/use-dispatches";
-import { parseDateOnly } from "@/lib/date";
+import { parseDateOnly, todayDateOnly } from "@/lib/date";
 import {
   type CreateDispatchInput,
-  createDispatchSchema,
+  type DispatchCreateStep2Input,
+  dispatchCreateStep2Schema,
 } from "@/lib/schemas/dispatch/dispatch";
 
-type DispatchDetailsFormValues = Omit<
-  CreateDispatchInput,
-  "requisitions" | "dateOfReceiving"
->;
+type DispatchDetailsFormValues = DispatchCreateStep2Input;
 
 const emptyValues: DispatchDetailsFormValues = {
-  dispatchDate: "",
+  dispatchDate: todayDateOnly(),
   locationId: "",
   toLocation: "",
   truckNumber: "",
@@ -180,10 +178,7 @@ export function DispatchDetailsStep({
   const form = useForm({
     defaultValues: emptyValues,
     validators: {
-      onSubmit: createDispatchSchema.omit({
-        requisitions: true,
-        dateOfReceiving: true,
-      }),
+      onSubmit: dispatchCreateStep2Schema,
     },
     onSubmit: async ({ value }) => {
       const requisitionInput = selectionsToInput(selections);
@@ -197,6 +192,7 @@ export function DispatchDetailsStep({
       const hasCalculatedAverage = hasCalculatedNet && totalBags > 0;
       onSubmit({
         ...value,
+        dispatchDate: (value.dispatchDate ?? "").trim() || todayDateOnly(),
         truckNumber: value.truckNumber.toUpperCase(),
         netWeight: hasCalculatedNet ? formatWeightValue(netWeight) : "",
         averageWeightPerBag: hasCalculatedAverage
@@ -350,6 +346,9 @@ export function DispatchDetailsStep({
                           onDateChange={field.handleChange}
                           onBlur={field.handleBlur}
                         />
+                        <FieldDescription>
+                          Defaults to today if left blank.
+                        </FieldDescription>
                         {isInvalid ? (
                           <FieldError errors={field.state.meta.errors} />
                         ) : null}

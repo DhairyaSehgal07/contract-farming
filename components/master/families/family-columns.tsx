@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,14 @@ export function createFamilyColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Account number" />
       ),
-      cell: ({ row }) => `#${row.original.accountNumber}`,
+      cell: ({ row }) => (
+        <Link
+          href={`/farmer-family/${row.original.familyId}`}
+          className="font-medium hover:underline"
+        >
+          #{row.original.accountNumber}
+        </Link>
+      ),
     },
     {
       accessorKey: "name",
@@ -38,6 +46,14 @@ export function createFamilyColumns(
       meta: { enableRowSpan: true },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
+      ),
+      cell: ({ row }) => (
+        <Link
+          href={`/farmer-family/${row.original.familyId}`}
+          className="hover:underline"
+        >
+          {row.original.name}
+        </Link>
       ),
     },
     {

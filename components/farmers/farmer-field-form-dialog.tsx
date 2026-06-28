@@ -21,9 +21,22 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   type FarmerFieldFormInput,
   farmerFieldFormSchema,
 } from "@/lib/schemas/farmer/farmer-field";
+
+type FamilyMemberOption = {
+  id: string;
+  name: string;
+  accountNumber: string;
+};
 
 type FarmerFieldFormDialogProps = {
   open: boolean;
@@ -32,6 +45,10 @@ type FarmerFieldFormDialogProps = {
   initialField?: FarmerFieldRow | null;
   isPending?: boolean;
   onSubmit: (values: FarmerFieldFormInput) => void;
+  members?: FamilyMemberOption[];
+  selectedFarmerId?: string;
+  onFarmerIdChange?: (farmerId: string) => void;
+  memberReadOnly?: boolean;
 };
 
 const emptyValues: FarmerFieldFormInput = {
@@ -57,6 +74,10 @@ export function FarmerFieldFormDialog({
   initialField = null,
   isPending = false,
   onSubmit,
+  members,
+  selectedFarmerId = "",
+  onFarmerIdChange,
+  memberReadOnly = false,
 }: FarmerFieldFormDialogProps) {
   const form = useForm({
     defaultValues: toFormValues(initialField),
@@ -84,7 +105,9 @@ export function FarmerFieldFormDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Record a field for this farmer."
+              ? members
+                ? "Record a field for a family member."
+                : "Record a field for this farmer."
               : "Update field details."}
           </DialogDescription>
         </DialogHeader>
@@ -98,6 +121,28 @@ export function FarmerFieldFormDialog({
           }}
         >
           <FieldGroup>
+            {members ? (
+              <Field>
+                <FieldLabel htmlFor="field-member">Member</FieldLabel>
+                <Select
+                  value={selectedFarmerId}
+                  onValueChange={onFarmerIdChange}
+                  disabled={memberReadOnly || isPending}
+                >
+                  <SelectTrigger id="field-member">
+                    <SelectValue placeholder="Select member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} (#{member.accountNumber})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
+
             <form.Field name="name">
               {(field) => {
                 const isInvalid =
@@ -182,7 +227,16 @@ export function FarmerFieldFormDialog({
             </Button>
             <form.Subscribe selector={(state) => state.canSubmit}>
               {(canSubmit) => (
-                <Button type="submit" disabled={!canSubmit || isPending}>
+                <Button
+                  type="submit"
+                  disabled={
+                    !canSubmit ||
+                    isPending ||
+                    (Boolean(members) &&
+                      mode === "create" &&
+                      !selectedFarmerId)
+                  }
+                >
                   {isPending
                     ? "Saving…"
                     : mode === "create"

@@ -23,8 +23,11 @@ import {
   normalizeCreateDispatchInput,
   type SendLotReceiptOtpInput,
   sendLotReceiptOtpSchema,
+  type UpdateDispatchBasicInput,
   type UpdateDispatchStep2Input,
+  normalizeUpdateDispatchBasicInput,
   normalizeUpdateDispatchStep2Input,
+  updateDispatchBasicSchema,
   updateDispatchStep2Schema,
 } from "@/lib/schemas/dispatch/dispatch";
 import {
@@ -697,6 +700,49 @@ export async function createDispatch(
       return actionError(error.message);
     }
     console.error("createDispatch failed:", error);
+    return actionError(getPrismaErrorMessage(error, "dispatch"));
+  }
+}
+
+export async function updateDispatchBasic(
+  input: UpdateDispatchBasicInput,
+): Promise<ActionResult<DispatchRow>> {
+  const authError = await requireDispatchWriteAction();
+  if (authError) return authError;
+
+  const parsed = updateDispatchBasicSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const { id, ...data } = normalizeUpdateDispatchBasicInput(parsed.data);
+
+  try {
+    const existing = await prisma.dispatch.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return actionError("Dispatch not found.");
+    }
+
+    const dispatch = await prisma.dispatch.update({
+      where: { id },
+      data: {
+        dispatchDate: new Date(`${data.dispatchDate}T00:00:00.000Z`),
+        locationId: data.locationId ?? null,
+        toLocation: data.toLocation ?? null,
+      },
+      include: dispatchInclude,
+    });
+
+    return actionSuccess(serializeDispatch(dispatch));
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return actionError(error.message);
+    }
+    console.error("updateDispatchBasic failed:", error);
     return actionError(getPrismaErrorMessage(error, "dispatch"));
   }
 }

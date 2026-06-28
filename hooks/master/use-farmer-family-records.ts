@@ -9,7 +9,7 @@ import {
   listFarmerFamilyRecords,
   updateFarmerFamily,
 } from "@/app/actions/master/farmer-families";
-import { farmerKeys, masterKeys } from "@/lib/query/keys";
+import { farmerKeys, masterKeys, farmerFamilyKeys } from "@/lib/query/keys";
 import { fetchFarmerFamilyRecords } from "@/lib/query/master-fetchers";
 import {
   LIST_DATA_STALE_TIME,
@@ -90,6 +90,9 @@ export function useUpdateFarmerFamily() {
       invalidateFamilyQueries(queryClient);
       void queryClient.invalidateQueries({
         queryKey: masterKeys.farmerFamilyRecord(data.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: farmerFamilyKeys.detail(data.id),
       });
       toast.success("Family updated");
     },

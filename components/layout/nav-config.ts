@@ -51,7 +51,7 @@ export const navItems: NavItem[] = [
     name: "Farmers",
     href: "/farmers",
     icon: Users,
-    activePaths: ["/farmers", "/fields"],
+    activePaths: ["/farmers", "/fields", "/farmer-family"],
     requiredAnyAppPermissions: [
       { resource: "master", action: "read" },
       { resource: "requisition", action: "read" },
