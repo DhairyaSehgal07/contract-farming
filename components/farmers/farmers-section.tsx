@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Group, Plus } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { FarmerRow } from "@/app/actions/master/farmers";
 import { DataTable } from "@/components/data-table/data-table";
@@ -23,6 +24,11 @@ type FarmersSectionProps = {
 };
 
 export function FarmersSection({ canWriteMaster }: FarmersSectionProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const groupByFamily = searchParams.get("groupBy") === "family";
+
   const { data = [], isPending, isError, error } = useFarmers();
   const createMutation = useCreateFarmer();
   const updateMutation = useUpdateFarmer();
@@ -33,7 +39,6 @@ export function FarmersSection({ canWriteMaster }: FarmersSectionProps) {
   const [editingFarmer, setEditingFarmer] = useState<FarmerRow | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingFarmer, setDeletingFarmer] = useState<FarmerRow | null>(null);
-  const [groupByFamily, setGroupByFamily] = useState(false);
 
   const columns = useMemo<ColumnDef<FarmerRow>[]>(
     () =>
@@ -90,6 +95,17 @@ export function FarmersSection({ canWriteMaster }: FarmersSectionProps) {
     });
   }
 
+  function handleGroupByFamilyToggle() {
+    const params = new URLSearchParams(searchParams.toString());
+    if (groupByFamily) {
+      params.delete("groupBy");
+    } else {
+      params.set("groupBy", "family");
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -103,7 +119,7 @@ export function FarmersSection({ canWriteMaster }: FarmersSectionProps) {
           <Button
             type="button"
             variant={groupByFamily ? "default" : "outline"}
-            onClick={() => setGroupByFamily((previous) => !previous)}
+            onClick={handleGroupByFamilyToggle}
           >
             <Group />
             Group by family
