@@ -22,6 +22,23 @@ export function parseDateOnly(value: string): Date {
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+export function isDateOnlyString(value: string): boolean {
+  return DATE_ONLY_PATTERN.test(value);
+}
+
+export function parseDateOnlyInput(value: string): Date | undefined {
+  if (!isDateOnlyString(value)) {
+    return undefined;
+  }
+
+  const date = parseDateOnly(value);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return formatDateOnly(date) === value ? date : undefined;
+}
+
 export function formatDisplayDate(value: string | null | undefined): string {
   if (!value) return "—";
 

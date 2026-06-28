@@ -14,26 +14,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { formatDateOnly, toLocalDateOnly } from "@/lib/date";
+import {
+  formatDateOnly,
+  isDateOnlyString,
+  parseDateOnlyInput,
+  toLocalDateOnly,
+} from "@/lib/date";
 import { cn } from "@/lib/utils";
 
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return "";
-  }
-
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function isValidDate(date: Date | undefined) {
-  if (!date) {
-    return false;
-  }
-  return !Number.isNaN(date.getTime());
+function formatInputDate(date: Date | undefined) {
+  return date ? formatDateOnly(date) : "";
 }
 
 export type DatePickerInputProps = {
@@ -55,7 +45,7 @@ export type DatePickerInputProps = {
 export function DatePickerInput({
   id: idProp,
   label,
-  placeholder = "Pick a date",
+  placeholder = "YYYY-MM-DD",
   value: valueProp,
   defaultValue,
   onChange,
@@ -77,7 +67,7 @@ export function DatePickerInput({
   const date = isControlled ? valueProp : internalDate;
 
   const [month, setMonth] = React.useState<Date | undefined>(date);
-  const [inputValue, setInputValue] = React.useState(formatDate(date));
+  const [inputValue, setInputValue] = React.useState(formatInputDate(date));
 
   const setDate = React.useCallback(
     (next: Date | undefined) => {
@@ -94,7 +84,7 @@ export function DatePickerInput({
   const [prevDate, setPrevDate] = React.useState(date);
   if (date !== prevDate) {
     setPrevDate(date);
-    setInputValue(formatDate(date));
+    setInputValue(formatInputDate(date));
     if (date) {
       setMonth(date);
     }
@@ -104,17 +94,39 @@ export function DatePickerInput({
     const nextValue = e.target.value;
     setInputValue(nextValue);
 
-    const parsed = new Date(nextValue);
-    if (isValidDate(parsed)) {
-      setDate(parsed);
-      setMonth(parsed);
+    if (isDateOnlyString(nextValue)) {
+      const parsed = parseDateOnlyInput(nextValue);
+      if (parsed) {
+        setDate(parsed);
+        setMonth(parsed);
+      }
     }
+  };
+
+  const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const trimmed = inputValue.trim();
+
+    if (trimmed === "") {
+      setInputValue("");
+      setDate(undefined);
+    } else {
+      const parsed = parseDateOnlyInput(trimmed);
+      if (parsed) {
+        setInputValue(formatDateOnly(parsed));
+        setDate(parsed);
+        setMonth(parsed);
+      } else {
+        setInputValue(formatInputDate(date));
+      }
+    }
+
+    onBlur?.(event);
   };
 
   const handleCalendarSelect = (selected: Date | undefined) => {
     const normalized = selected ? toLocalDateOnly(selected) : undefined;
     setDate(normalized);
-    setInputValue(formatDate(normalized));
+    setInputValue(formatInputDate(normalized));
     setOpen(false);
   };
 
@@ -128,8 +140,10 @@ export function DatePickerInput({
         disabled={disabled}
         required={required}
         aria-invalid={ariaInvalid}
+        inputMode="numeric"
+        autoComplete="off"
         onChange={handleInputChange}
-        onBlur={onBlur}
+        onBlur={handleInputBlur}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();
