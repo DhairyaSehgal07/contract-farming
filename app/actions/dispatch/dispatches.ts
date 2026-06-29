@@ -12,7 +12,7 @@ import {
   RequisitionStatus,
 } from "@/app/generated/prisma/client";
 import { getDispatchReceiptProgress, canDeleteDispatch } from "@/lib/dispatch/lot-status";
-import prisma from "@/lib/prisma";
+import prisma, { prismaInteractiveTxOptions } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth/session";
 import { requireDispatchReadAction, requireDispatchWriteAction } from "@/lib/schemas/dispatch/auth";
 import {
@@ -515,9 +515,13 @@ export async function createDispatch(
 
   try {
     const dispatch = await prisma.$transaction(async (tx) => {
-      for (const selection of data.requisitions) {
-        const requisition = await tx.requisition.findUnique({
-          where: { id: selection.requisitionId },
+      const requisitionIds = data.requisitions.map(
+        (selection) => selection.requisitionId,
+      );
+
+      const [requisitions, sizes] = await Promise.all([
+        tx.requisition.findMany({
+          where: { id: { in: requisitionIds } },
           select: {
             id: true,
             status: true,
@@ -526,7 +530,19 @@ export async function createDispatch(
             fulfilledQuantity: true,
             fulfilledAcres: true,
           },
-        });
+        }),
+        tx.size.findMany({
+          select: { id: true, bagsPerAcre: true },
+        }),
+      ]);
+
+      const requisitionById = new Map(
+        requisitions.map((requisition) => [requisition.id, requisition]),
+      );
+      const sizeById = new Map(sizes.map((size) => [size.id, size]));
+
+      for (const selection of data.requisitions) {
+        const requisition = requisitionById.get(selection.requisitionId);
 
         if (!requisition) {
           throw new Error("Requisition not found.");
@@ -576,10 +592,7 @@ export async function createDispatch(
         }
 
         const line = selection.sizeLines[0]!;
-        const size = await tx.size.findUnique({
-          where: { id: line.sizeId },
-          select: { id: true, bagsPerAcre: true },
-        });
+        const size = sizeById.get(line.sizeId);
 
         if (!size) {
           throw new Error("Size not found.");
@@ -661,10 +674,7 @@ export async function createDispatch(
         let acresIncrement = 0;
         if (selection.sizeLines.length === 1) {
           const line = selection.sizeLines[0]!;
-          const size = await tx.size.findUnique({
-            where: { id: line.sizeId },
-            select: { bagsPerAcre: true },
-          });
+          const size = sizeById.get(line.sizeId);
           if (size?.bagsPerAcre) {
             const consumed = calculateAcresFromBags(
               line.quantity,
@@ -688,11 +698,15 @@ export async function createDispatch(
           },
         });
 
-        await maybeMarkRequisitionFulfilled(tx, selection.requisitionId);
+        await maybeMarkRequisitionFulfilled(
+          tx,
+          selection.requisitionId,
+          sizes,
+        );
       }
 
       return created;
-    });
+    }, prismaInteractiveTxOptions);
 
     return actionSuccess(serializeDispatch(dispatch));
   } catch (error) {
@@ -846,6 +860,10 @@ export async function deleteDispatch(id: string): Promise<ActionResult> {
         throw new Error(deleteCheck.reason);
       }
 
+      const sizes = await tx.size.findMany({
+        select: { id: true, bagsPerAcre: true },
+      });
+
       for (const item of dispatch.requisitions) {
         const decrementBy = item.sizeLines.reduce(
           (sum, line) => sum + Number.parseFloat(line.quantity.toString()),
@@ -894,11 +912,15 @@ export async function deleteDispatch(id: string): Promise<ActionResult> {
           },
         });
 
-        await maybeRevertRequisitionFromFulfilled(tx, item.requisitionId);
+        await maybeRevertRequisitionFromFulfilled(
+          tx,
+          item.requisitionId,
+          sizes,
+        );
       }
 
       await tx.dispatch.delete({ where: { id: dispatch.id } });
-    });
+    }, prismaInteractiveTxOptions);
 
     return actionSuccess(undefined);
   } catch (error) {

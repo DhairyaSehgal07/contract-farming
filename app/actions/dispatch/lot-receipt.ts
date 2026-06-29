@@ -17,25 +17,32 @@ import { creditFarmerStockFromLot } from "@/lib/transfer/stock-balance";
 
 type TransactionClient = Prisma.TransactionClient;
 
+type RequisitionFulfillmentSize = {
+  id: string;
+  bagsPerAcre: number | null;
+};
+
 export async function maybeMarkRequisitionFulfilled(
   tx: TransactionClient,
   requisitionId: string,
+  sizes?: RequisitionFulfillmentSize[],
 ) {
-  const [requisition, sizes] = await Promise.all([
-    tx.requisition.findUnique({
-      where: { id: requisitionId },
-      select: {
-        status: true,
-        acres: true,
-        initialQuantity: true,
-        fulfilledQuantity: true,
-        fulfilledAcres: true,
-      },
-    }),
-    tx.size.findMany({
+  const requisition = await tx.requisition.findUnique({
+    where: { id: requisitionId },
+    select: {
+      status: true,
+      acres: true,
+      initialQuantity: true,
+      fulfilledQuantity: true,
+      fulfilledAcres: true,
+    },
+  });
+
+  const sizeList =
+    sizes ??
+    (await tx.size.findMany({
       select: { id: true, bagsPerAcre: true },
-    }),
-  ]);
+    }));
 
   if (!requisition) {
     throw new Error("Requisition not found.");
@@ -49,7 +56,7 @@ export async function maybeMarkRequisitionFulfilled(
     fulfilledAcres: requisition.fulfilledAcres.toString(),
   };
 
-  if (!shouldMarkRequisitionFulfilled(requisitionFields, sizes)) {
+  if (!shouldMarkRequisitionFulfilled(requisitionFields, sizeList)) {
     return;
   }
 
@@ -62,22 +69,24 @@ export async function maybeMarkRequisitionFulfilled(
 export async function maybeRevertRequisitionFromFulfilled(
   tx: TransactionClient,
   requisitionId: string,
+  sizes?: RequisitionFulfillmentSize[],
 ) {
-  const [requisition, sizes] = await Promise.all([
-    tx.requisition.findUnique({
-      where: { id: requisitionId },
-      select: {
-        status: true,
-        acres: true,
-        initialQuantity: true,
-        fulfilledQuantity: true,
-        fulfilledAcres: true,
-      },
-    }),
-    tx.size.findMany({
+  const requisition = await tx.requisition.findUnique({
+    where: { id: requisitionId },
+    select: {
+      status: true,
+      acres: true,
+      initialQuantity: true,
+      fulfilledQuantity: true,
+      fulfilledAcres: true,
+    },
+  });
+
+  const sizeList =
+    sizes ??
+    (await tx.size.findMany({
       select: { id: true, bagsPerAcre: true },
-    }),
-  ]);
+    }));
 
   if (!requisition) {
     throw new Error("Requisition not found.");
@@ -91,7 +100,7 @@ export async function maybeRevertRequisitionFromFulfilled(
     fulfilledAcres: requisition.fulfilledAcres.toString(),
   };
 
-  if (!shouldRevertRequisitionToApproved(requisitionFields, sizes)) {
+  if (!shouldRevertRequisitionToApproved(requisitionFields, sizeList)) {
     return;
   }
 

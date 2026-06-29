@@ -340,14 +340,14 @@ export function DispatchDetailsStep({
                         <DatePickerInput
                           id="dispatch-date"
                           label="Dispatch date"
-                          placeholder="YYYY-MM-DD"
+                          inputFormat="dmy"
                           value={selectedDate}
                           aria-invalid={isInvalid}
                           onDateChange={field.handleChange}
                           onBlur={field.handleBlur}
                         />
                         <FieldDescription>
-                          Type a date as YYYY-MM-DD or pick from the calendar.
+                          Type a date as DD/MM/YYYY or pick from the calendar.
                           Defaults to today if left blank.
                         </FieldDescription>
                         {isInvalid ? (

@@ -135,7 +135,7 @@ export function DispatchEditSheet({
                       <DatePickerInput
                         id="edit-dispatch-date"
                         label="Dispatch date"
-                        placeholder="Pick a date"
+                        inputFormat="dmy"
                         value={selectedDate}
                         aria-invalid={isInvalid}
                         onDateChange={field.handleChange}

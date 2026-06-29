@@ -46,4 +46,9 @@ function getPrismaClient() {
 
 const prisma = getPrismaClient();
 
+/** Default interactive transaction options for multi-step server actions. */
+export const prismaInteractiveTxOptions = {
+  timeout: 15_000,
+} as const;
+
 export default prisma;

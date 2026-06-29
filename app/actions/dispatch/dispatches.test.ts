@@ -3,6 +3,7 @@ import { Role } from "@/app/generated/prisma/client";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/auth/default-role-permissions";
 
 vi.mock("@/lib/prisma", () => ({
+  prismaInteractiveTxOptions: { timeout: 15_000 },
   default: {
     rolePermission: {
       findMany: vi.fn(),

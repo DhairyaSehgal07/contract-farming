@@ -15,15 +15,32 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  formatDateDmy,
   formatDateOnly,
+  isDateDmyString,
   isDateOnlyString,
+  parseDateDmyInput,
   parseDateOnlyInput,
   toLocalDateOnly,
 } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
-function formatInputDate(date: Date | undefined) {
-  return date ? formatDateOnly(date) : "";
+type DatePickerInputFormat = "iso" | "dmy";
+
+function formatInputDate(date: Date | undefined, format: DatePickerInputFormat) {
+  if (!date) return "";
+  return format === "dmy" ? formatDateDmy(date) : formatDateOnly(date);
+}
+
+function parseInputDate(
+  value: string,
+  format: DatePickerInputFormat,
+): Date | undefined {
+  return format === "dmy" ? parseDateDmyInput(value) : parseDateOnlyInput(value);
+}
+
+function isCompleteInputDate(value: string, format: DatePickerInputFormat) {
+  return format === "dmy" ? isDateDmyString(value) : isDateOnlyString(value);
 }
 
 export type DatePickerInputProps = {
@@ -39,13 +56,15 @@ export type DatePickerInputProps = {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  /** Display and typed input format. `onDateChange` always emits `YYYY-MM-DD`. */
+  inputFormat?: DatePickerInputFormat;
   "aria-invalid"?: boolean;
 };
 
 export function DatePickerInput({
   id: idProp,
   label,
-  placeholder = "YYYY-MM-DD",
+  placeholder,
   value: valueProp,
   defaultValue,
   onChange,
@@ -54,11 +73,14 @@ export function DatePickerInput({
   className,
   disabled,
   required,
+  inputFormat = "iso",
   "aria-invalid": ariaInvalid,
 }: DatePickerInputProps) {
   const generatedId = React.useId();
   const id = idProp ?? generatedId;
   const isControlled = valueProp !== undefined;
+  const resolvedPlaceholder =
+    placeholder ?? (inputFormat === "dmy" ? "DD/MM/YYYY" : "YYYY-MM-DD");
 
   const [open, setOpen] = React.useState(false);
   const [internalDate, setInternalDate] = React.useState<Date | undefined>(
@@ -67,7 +89,9 @@ export function DatePickerInput({
   const date = isControlled ? valueProp : internalDate;
 
   const [month, setMonth] = React.useState<Date | undefined>(date);
-  const [inputValue, setInputValue] = React.useState(formatInputDate(date));
+  const [inputValue, setInputValue] = React.useState(
+    formatInputDate(date, inputFormat),
+  );
 
   const setDate = React.useCallback(
     (next: Date | undefined) => {
@@ -82,9 +106,12 @@ export function DatePickerInput({
   );
 
   const [prevDate, setPrevDate] = React.useState(date);
-  if (date !== prevDate) {
+  const [prevInputFormat, setPrevInputFormat] =
+    React.useState<DatePickerInputFormat>(inputFormat);
+  if (date !== prevDate || inputFormat !== prevInputFormat) {
     setPrevDate(date);
-    setInputValue(formatInputDate(date));
+    setPrevInputFormat(inputFormat);
+    setInputValue(formatInputDate(date, inputFormat));
     if (date) {
       setMonth(date);
     }
@@ -94,8 +121,8 @@ export function DatePickerInput({
     const nextValue = e.target.value;
     setInputValue(nextValue);
 
-    if (isDateOnlyString(nextValue)) {
-      const parsed = parseDateOnlyInput(nextValue);
+    if (isCompleteInputDate(nextValue, inputFormat)) {
+      const parsed = parseInputDate(nextValue, inputFormat);
       if (parsed) {
         setDate(parsed);
         setMonth(parsed);
@@ -110,13 +137,13 @@ export function DatePickerInput({
       setInputValue("");
       setDate(undefined);
     } else {
-      const parsed = parseDateOnlyInput(trimmed);
+      const parsed = parseInputDate(trimmed, inputFormat);
       if (parsed) {
-        setInputValue(formatDateOnly(parsed));
+        setInputValue(formatInputDate(parsed, inputFormat));
         setDate(parsed);
         setMonth(parsed);
       } else {
-        setInputValue(formatInputDate(date));
+        setInputValue(formatInputDate(date, inputFormat));
       }
     }
 
@@ -126,7 +153,7 @@ export function DatePickerInput({
   const handleCalendarSelect = (selected: Date | undefined) => {
     const normalized = selected ? toLocalDateOnly(selected) : undefined;
     setDate(normalized);
-    setInputValue(formatInputDate(normalized));
+    setInputValue(formatInputDate(normalized, inputFormat));
     setOpen(false);
   };
 
@@ -136,7 +163,7 @@ export function DatePickerInput({
         id={id}
         name={id}
         value={inputValue}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         disabled={disabled}
         required={required}
         aria-invalid={ariaInvalid}
