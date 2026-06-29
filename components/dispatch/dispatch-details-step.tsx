@@ -45,6 +45,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useDispatchFormOptions } from "@/hooks/dispatch/use-dispatches";
 import { parseDateOnly, todayDateOnly } from "@/lib/date";
+import { preventImplicitFormSubmit } from "@/lib/forms/prevent-implicit-submit";
 import {
   type CreateDispatchInput,
   type DispatchCreateStep2Input,
@@ -217,9 +218,11 @@ export function DispatchDetailsStep({
       <form
         id="create-dispatch-form"
         noValidate
+        onKeyDown={preventImplicitFormSubmit}
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
+          if (isPending) return;
           void form.handleSubmit();
         }}
       >
