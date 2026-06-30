@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   calculateAcresFromBags,
   calculateBagsFromAcres,
+  getAcresDispatchCredit,
+  getAcresDispatchDebit,
   getFulfillmentPercent,
   getMaxBagsForRemainingAcres,
   getPendingRequisitionsSummary,
@@ -11,6 +13,7 @@ import {
   getTotalBagsForSize,
   hasPendingDispatchQuantity,
   isAcresBasedRequisition,
+  isAcresDispatchWithinTolerance,
   isBagsBasedRequisition,
   isDispatchableRequisition,
 } from "@/lib/requisition/quantity";
@@ -237,6 +240,64 @@ describe("requisition quantity helpers", () => {
     expect(getRemainingAcres(afterLot2)).toBe(0);
     expect(isDispatchableRequisition(afterLot2, [{ id: "size-1", bagsPerAcre: 30 }])).toBe(
       false,
+    );
+  });
+});
+
+describe("acres dispatch overage tolerance", () => {
+  it("allows dispatch within 0.5 acre overage", () => {
+    expect(isAcresDispatchWithinTolerance(1.57, 1.5)).toBe(true);
+    expect(isAcresDispatchWithinTolerance(2, 1.5)).toBe(true);
+    expect(isAcresDispatchWithinTolerance(1.5, 1.5)).toBe(true);
+  });
+
+  it("rejects dispatch beyond 0.5 acre overage", () => {
+    expect(isAcresDispatchWithinTolerance(2.01, 1.5)).toBe(false);
+    expect(isAcresDispatchWithinTolerance(1.57, 0)).toBe(false);
+    expect(isAcresDispatchWithinTolerance(null, 1.5)).toBe(false);
+  });
+
+  it("credits remaining acres when tolerance caps consumption", () => {
+    expect(getAcresDispatchCredit(1.57, 1.5)).toBe(1.5);
+    expect(getAcresDispatchCredit(0.8, 2)).toBe(0.8);
+    expect(getAcresDispatchCredit(1, 1)).toBe(1);
+  });
+
+  it("debits capped tolerance credit below full bag acres", () => {
+    const acresFromBags = calculateAcresFromBags(11, 7)!;
+    expect(acresFromBags).toBeCloseTo(1.57, 2);
+
+    const credit = getAcresDispatchCredit(acresFromBags, 1.5);
+    expect(credit).toBe(1.5);
+
+    const fulfilledAfter = 0.5 + credit;
+    const debit = getAcresDispatchDebit(acresFromBags, fulfilledAfter, 2);
+    expect(debit).toBeGreaterThan(0);
+    expect(debit).toBeLessThanOrEqual(acresFromBags);
+  });
+
+  it("debits full bags when no tolerance cap was applied", () => {
+    expect(getAcresDispatchDebit(0.8, 1.8, 2)).toBe(0.8);
+  });
+
+  it("round-trips tolerance dispatch credit on create", () => {
+    const orderedAcres = 2;
+    const fulfilledBefore = 0.5;
+    const remainingBefore = orderedAcres - fulfilledBefore;
+    const acresFromBags = calculateAcresFromBags(11, 7)!;
+    const credit = getAcresDispatchCredit(acresFromBags, remainingBefore);
+    const fulfilledAfter = fulfilledBefore + credit;
+
+    expect(credit).toBe(1.5);
+    expect(
+      getRemainingAcres({
+        acres: "2",
+        initialQuantity: null,
+        fulfilledAcres: String(fulfilledAfter),
+      }),
+    ).toBe(0);
+    expect(isAcresDispatchWithinTolerance(acresFromBags, remainingBefore)).toBe(
+      true,
     );
   });
 });

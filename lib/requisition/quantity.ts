@@ -45,6 +45,60 @@ export function calculateAcresFromBags(bags: number, bagsPerAcre: number) {
   return bags / bagsPerAcre;
 }
 
+export const ACRES_DISPATCH_OVERAGE_TOLERANCE = 0.5;
+
+export function isAcresDispatchWithinTolerance(
+  acresConsumed: number | null,
+  remainingAcres: number | null,
+): boolean {
+  if (acresConsumed === null || remainingAcres === null) return false;
+  if (remainingAcres <= 0) return false;
+  return acresConsumed <= remainingAcres + ACRES_DISPATCH_OVERAGE_TOLERANCE;
+}
+
+export function getAcresDispatchCredit(
+  acresConsumed: number,
+  remainingAcres: number,
+): number {
+  return Math.min(acresConsumed, Math.max(0, remainingAcres));
+}
+
+function roundAcres(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+export function getAcresDispatchDebit(
+  acresFromBags: number,
+  currentFulfilledAcres: number,
+  orderedAcres: number,
+): number {
+  const roundedFulfilled = roundAcres(currentFulfilledAcres);
+  const roundedOrdered = roundAcres(orderedAcres);
+  const remainingIfFullRevert = roundAcres(
+    Math.max(0, roundedOrdered - roundAcres(roundedFulfilled - acresFromBags)),
+  );
+
+  if (remainingIfFullRevert > acresFromBags) {
+    return acresFromBags;
+  }
+
+  let fulfilledBefore = roundAcres(roundedFulfilled - acresFromBags);
+
+  for (let i = 0; i < 8; i++) {
+    const remainingBefore = roundAcres(roundedOrdered - fulfilledBefore);
+    const credit = getAcresDispatchCredit(acresFromBags, remainingBefore);
+    const nextFulfilledBefore = roundAcres(roundedFulfilled - credit);
+
+    if (Math.abs(nextFulfilledBefore - fulfilledBefore) < 0.005) {
+      return credit;
+    }
+
+    fulfilledBefore = nextFulfilledBefore;
+  }
+
+  return getAcresDispatchCredit(acresFromBags, remainingIfFullRevert);
+}
+
 export function getRemainingAcres(requisition: RequisitionQuantityFields) {
   const acres = parsePositiveNumber(requisition.acres);
   if (acres === null) return null;

@@ -139,6 +139,8 @@ const prisma = new PrismaClient({ adapter });
 
 async function clearAllData() {
   await prisma.otpChallenge.deleteMany();
+  await prisma.stockTransfer.deleteMany();
+  await prisma.farmerStockBalance.deleteMany();
   await prisma.dispatchLot.deleteMany();
   await prisma.dispatchRequisitionSizeLine.deleteMany();
   await prisma.dispatchRequisition.deleteMany();

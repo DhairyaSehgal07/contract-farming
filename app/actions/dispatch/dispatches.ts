@@ -38,11 +38,15 @@ import {
 import { getPrismaErrorMessage } from "@/lib/schemas/master/prisma-errors";
 import {
   calculateAcresFromBags,
+  getAcresDispatchCredit,
+  getAcresDispatchDebit,
+  getOrderedAcres,
   getRemainingAcres,
   getRemainingBagsForSize,
   getRemainingQuantityForRequisition,
   hasPendingDispatchQuantity,
   isAcresBasedRequisition,
+  isAcresDispatchWithinTolerance,
   isBagsBasedRequisition,
 } from "@/lib/requisition/quantity";
 
@@ -622,7 +626,7 @@ export async function createDispatch(
           line.quantity,
           size.bagsPerAcre,
         );
-        if (acresConsumed === null || acresConsumed > remainingAcres) {
+        if (!isAcresDispatchWithinTolerance(acresConsumed, remainingAcres)) {
           throw new Error(
             "Dispatch quantity exceeds remaining requisition acres.",
           );
@@ -675,13 +679,21 @@ export async function createDispatch(
         if (selection.sizeLines.length === 1) {
           const line = selection.sizeLines[0]!;
           const size = sizeById.get(line.sizeId);
-          if (size?.bagsPerAcre) {
+          const requisition = requisitionById.get(selection.requisitionId);
+          if (size?.bagsPerAcre && requisition) {
+            const requisitionFields = {
+              acres: requisition.acres?.toString() ?? null,
+              initialQuantity: requisition.initialQuantity?.toString() ?? null,
+              fulfilledQuantity: requisition.fulfilledQuantity.toString(),
+              fulfilledAcres: requisition.fulfilledAcres.toString(),
+            };
             const consumed = calculateAcresFromBags(
               line.quantity,
               size.bagsPerAcre,
             );
-            if (consumed !== null) {
-              acresIncrement = consumed;
+            const remainingAcres = getRemainingAcres(requisitionFields);
+            if (consumed !== null && remainingAcres !== null) {
+              acresIncrement = getAcresDispatchCredit(consumed, remainingAcres);
             }
           }
         }
@@ -869,19 +881,15 @@ export async function deleteDispatch(id: string): Promise<ActionResult> {
           (sum, line) => sum + Number.parseFloat(line.quantity.toString()),
           0,
         );
-        const acresDecrement = item.sizeLines.reduce((sum, line) => {
-          const bagsPerAcre = line.size.bagsPerAcre;
-          if (!bagsPerAcre || bagsPerAcre <= 0) return sum;
-          const consumed = calculateAcresFromBags(
-            Number.parseFloat(line.quantity.toString()),
-            bagsPerAcre,
-          );
-          return consumed !== null ? sum + consumed : sum;
-        }, 0);
 
         const requisition = await tx.requisition.findUnique({
           where: { id: item.requisitionId },
-          select: { fulfilledQuantity: true, fulfilledAcres: true },
+          select: {
+            acres: true,
+            initialQuantity: true,
+            fulfilledQuantity: true,
+            fulfilledAcres: true,
+          },
         });
 
         if (!requisition) {
@@ -896,6 +904,27 @@ export async function deleteDispatch(id: string): Promise<ActionResult> {
         const fulfilledAcres = Number.parseFloat(
           requisition.fulfilledAcres.toString(),
         );
+        const requisitionFields = {
+          acres: requisition.acres?.toString() ?? null,
+          initialQuantity: requisition.initialQuantity?.toString() ?? null,
+          fulfilledQuantity: requisition.fulfilledQuantity.toString(),
+          fulfilledAcres: requisition.fulfilledAcres.toString(),
+        };
+        const orderedAcres = getOrderedAcres(requisitionFields);
+        const acresFromBags = item.sizeLines.reduce((sum, line) => {
+          const bagsPerAcre = line.size.bagsPerAcre;
+          if (!bagsPerAcre || bagsPerAcre <= 0) return sum;
+          const consumed = calculateAcresFromBags(
+            Number.parseFloat(line.quantity.toString()),
+            bagsPerAcre,
+          );
+          return consumed !== null ? sum + consumed : sum;
+        }, 0);
+        const acresDecrement =
+          orderedAcres !== null
+            ? getAcresDispatchDebit(acresFromBags, fulfilledAcres, orderedAcres)
+            : acresFromBags;
+
         if (acresDecrement > fulfilledAcres) {
           throw new Error("Cannot reverse dispatch acres for this requisition.");
         }
